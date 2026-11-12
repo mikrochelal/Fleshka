@@ -1,7 +1,7 @@
 --!strict
 -- Checks the gameplay data against the map layout: `luau tests/props.luau`
 -- Runtime props must sit inside their rooms, clear of doorways, of the map's own
--- placeholder props and of the spawn point; documents, objectives and transmissions must
+-- placeholder props and of the spawn point; documents and the props objectives need must
 -- be complete.
 
 local Layout = require("../src/ServerStorage/DevTools/MapGenerator/Layout")
@@ -9,7 +9,7 @@ local Plan = require("../src/ServerStorage/DevTools/MapGenerator/Plan")
 local PropList = require("../src/ServerScriptService/Data/PropList")
 local Placement = require("../src/ServerScriptService/Systems/WorldProps/Placement")
 local Documents = require("../src/ServerScriptService/Data/Documents")
-local Transmissions = require("../src/ServerScriptService/Data/Transmissions")
+local MissionConfig = require("../src/ReplicatedStorage/Config/MissionConfig")
 local ObjectiveConfig = require("../src/ReplicatedStorage/Config/ObjectiveConfig")
 local PowerConfig = require("../src/ReplicatedStorage/Config/PowerConfig")
 local CopyConfig = require("../src/ReplicatedStorage/Config/CopyConfig")
@@ -162,102 +162,60 @@ for _, def in PropList :: { any } do
 	check(`{id}: prompt reachable from beside it`, math.max(item.sx, item.sz) / 2 + 3 <= REACH)
 end
 
--- Everything the mission needs is present.
-for _, kind in { "ElevatorPanel", "MainLever", "Radio", "CommConsole" } do
+-- Everything the mission needs is present, exactly once where it must be unique.
+for _, kind in
+	{
+		"ElevatorPanel",
+		"MainLever",
+		"Radio",
+		"CommConsole",
+		"Switchgear",
+		"AnalysisConsole",
+		"GeneratorPanel",
+		"FanControl",
+		"ServerRack",
+		"MastControl",
+		"RadioDesk",
+		"EvacConsole",
+		"FreightPanel",
+	}
+do
 	check(`exactly one {kind}`, kinds[kind] == 1)
 end
-check("at least two lore documents and the memo", (kinds.Document or 0) >= 3)
-check("battery packs exist", (kinds.Battery or 0) >= 2)
+check("two channel selectors", kinds.Tuner == 2)
+check("two keypads", kinds.Keypad == 2)
+check("the feeders of the load puzzle", kinds.Feeder == MissionConfig.LoadPuzzle.Feeders)
+check("the fuse and the tape", kinds.Item == 2)
+check("battery packs across the station", (kinds.Battery or 0) >= 5)
+check("a dozen documents or more", (kinds.Document or 0) >= 12)
 
--- Documents.
+-- Documents: every placed document is written, and every written document is placed.
+local english = require("../src/ReplicatedStorage/Shared/Locale/en")
+local placed: { [string]: boolean } = {}
 for _, def in PropList :: { any } do
 	if def.kind == "Document" then
-		local document = Documents[def.id]
+		placed[def.id] = true
+		local document = (Documents :: { [string]: any })[def.id]
 		check(`document {def.id} is written`, document ~= nil)
 		if document then
-			check(
-				`document {def.id} has a title and a date`,
-				#document.title > 0 and #document.date > 0
-			)
-			local body = document.body
-			local text = if type(body) == "function"
-				then body({ breakerSteps = { "FIRST STEP", "SECOND STEP", "THIRD STEP" } })
-				else body
-			check(`document {def.id} has text`, #text > 80)
-			if type(body) == "function" then
-				local first = string.find(text, "FIRST STEP", 1, true)
-				local third = string.find(text, "THIRD STEP", 1, true)
-				check(
-					`document {def.id} lists the steps in order`,
-					first ~= nil and third ~= nil and first < third
-				)
-			end
+			check(`document {def.id} has a title`, #(english[document.title] or "") > 0)
+			check(`document {def.id} has a date`, #(english[document.date] or "") > 0)
+			check(`document {def.id} has text`, #(english[document.body] or "") > 80)
 		end
 	end
 end
-local lore = Documents.IncidentLog.body
-check(
-	"the incident log carries the final transmission",
-	type(lore) == "string" and string.find(lore, "IT KNOWS WE ARE LISTENING", 1, true) ~= nil
-)
-
--- Transmissions.
-local function spoken(steps: { any }): string
-	local lines = {}
-	for _, step in steps do
-		check(
-			"every transmission step has a duration",
-			type(step.hold) == "number" and step.hold > 0
-		)
-		if step.text then
-			table.insert(lines, step.text)
-		end
-	end
-	return table.concat(lines, " | ")
+for id in Documents :: { [string]: any } do
+	check(`document {id} is placed in the station`, placed[id] == true)
 end
-local first = spoken(Transmissions.FirstContact)
-local firstLine = string.find(first, "Station Nine... can anyone hear me?", 1, true)
-local secondLine = string.find(first, "Do not trust the voices.", 1, true)
-local thirdLine = string.find(first, "IT KNOWS WE ARE LISTENING.", 1, true)
-check(
-	"the first transmission has its three lines in order",
-	firstLine ~= nil
-		and secondLine ~= nil
-		and thirdLine ~= nil
-		and firstLine < secondLine
-		and secondLine < thirdLine
-)
-local silences = 0
-for _, step in Transmissions.FirstContact do
-	if not step.text then
-		silences += 1
+
+-- Objectives: the props they need exist (the order itself is checked in tests/mission.luau).
+for _, objective in ObjectiveConfig.List do
+	for _, prop in objective.props or {} do
+		check(`objective {objective.id}: prop {prop} exists`, seenIds[prop] == true)
 	end
 end
-check("the first transmission has pauses between its lines", silences >= 2)
-check(
-	"the final words are present",
-	string.find(spoken(Transmissions.FinalWords), "Thank you for bringing it outside.", 1, true)
-		~= nil
-)
-
--- Objectives.
-local expected = {
-	"EnterStation",
-	"FindPowerControls",
-	"RestorePower",
-	"RestoreSystems",
-	"InvestigateRadio",
-	"TraceSignal",
-	"ReachCommCenter",
-	"Escape",
-}
-check("eight objectives", #ObjectiveConfig.List == #expected)
-for index, id in expected do
-	local objective = ObjectiveConfig.List[index]
-	check(
-		`objective {index} is {id}`,
-		objective ~= nil and objective.id == id and #objective.text > 0
-	)
+for id, lock in MissionConfig.Locks do
+	check(`lock {id}: keypad {lock.prop} exists`, seenIds[lock.prop] == true)
 end
 
 -- Power puzzle: every panel on the map has a name, and there is more than one order.
@@ -273,6 +231,7 @@ for _, prop in Layout.props do
 	end
 end
 check("the puzzle has at least three breakers", panelCount >= 3)
+check("the memo has room for every breaker", panelCount <= PowerConfig.MemoSteps)
 local circuits: { [string]: boolean } = { Emergency = true }
 for _, area in Layout.areas do
 	circuits[area.id] = true
@@ -283,11 +242,10 @@ end
 check("the entrance keeps its lights", table.find(PowerConfig.UnpoweredCircuits, "A") == nil)
 
 -- Rooms named in configuration exist.
-for label, name in
-	{ SightingRoom = CopyConfig.SightingRoom, CaughtReturnRoom = CopyConfig.CaughtReturnRoom }
-do
-	check(`CopyConfig.{label} "{name}" exists`, rooms[name] ~= nil)
-end
+check(
+	`CopyConfig.SightingRoom "{CopyConfig.SightingRoom}" exists`,
+	rooms[CopyConfig.SightingRoom] ~= nil
+)
 local vantages = 0
 for _, marker in Layout.markers do
 	if marker.tag == "TLS_CopyVantage" then

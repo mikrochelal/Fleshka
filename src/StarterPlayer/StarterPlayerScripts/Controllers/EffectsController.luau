@@ -1,6 +1,7 @@
 --!strict
 -- Full-screen presentation: radio interference, the blackout when a player is taken, the
--- title card before play and the completion card at the end of the current build.
+-- loading and title cards before play, the chapter title when a chapter begins, and the
+-- ending card. All text is rendered in the player's language.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,9 +11,14 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = ReplicatedStorage:WaitForChild("Config")
 local GameConfig = require(Config:WaitForChild("GameConfig"))
 local GameState = require(Shared:WaitForChild("GameState"))
+local ObjectiveConfig = require(Config:WaitForChild("ObjectiveConfig"))
 local Net = require(Shared:WaitForChild("Net"))
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme"))
+local LocalizationController = require(script.Parent:WaitForChild("LocalizationController"))
 local SessionController = require(script.Parent:WaitForChild("SessionController"))
+
+local t = LocalizationController.t
+local CHAPTER_SECONDS = 4
 
 local BAR_COUNT = 7
 local DREAD_ATTRIBUTE = GameState.PlayerAttribute.Dread
@@ -29,6 +35,12 @@ local card: Frame
 local cardTitle: TextLabel
 local cardBody: TextLabel
 local cardButton: TextButton
+local chapterCard: TextLabel
+-- Which card is up ("Loading" | "Intro" | "Ending"), so it can be re-rendered when the
+-- language changes.
+local shownCard: string? = nil
+local shownChapter = 0
+local chapterToken = 0
 
 -- Interference requested by the server: full strength until this time.
 local interferenceUntil = 0
@@ -88,41 +100,92 @@ local function hideCard()
 	end)
 end
 
-local function formatDuration(): string
-	local seconds = ReplicatedStorage:GetAttribute(GameState.DURATION_ATTRIBUTE)
-	if type(seconds) ~= "number" then
-		return ""
+local function cardText(kind: string): (string, string)
+	if kind == "Loading" then
+		return t("UI_LOADING_TITLE"), t("UI_LOADING_BODY")
+	elseif kind == "Intro" then
+		return t("UI_INTRO_TITLE"), t("UI_INTRO_BODY")
 	end
-	return string.format("\n\nTime inside: %d:%02d", seconds // 60, seconds % 60)
+	local body = t("UI_ENDING_BODY")
+	local seconds = ReplicatedStorage:GetAttribute(GameState.DURATION_ATTRIBUTE)
+	if type(seconds) == "number" then
+		body ..= "\n\n" .. t("UI_ENDING_TIME", {
+			minutes = seconds // 60,
+			seconds = string.format("%02d", seconds % 60),
+		})
+	end
+	body ..= "\n" .. t("UI_ENDING_VERSION", { version = GameConfig.Version })
+	return t("UI_ENDING_TITLE"), body
+end
+
+local function renderText()
+	cardButton.Text = t("UI_KEEP_EXPLORING")
+	if shownCard then
+		cardTitle.Text, cardBody.Text = cardText(shownCard)
+	end
+end
+
+local function currentChapter(): number
+	local value = ReplicatedStorage:GetAttribute(GameState.OBJECTIVE_ATTRIBUTE)
+	local list = ObjectiveConfig.List
+	local index = math.clamp(if type(value) == "number" then value else 1, 1, #list)
+	return list[index].chapter
+end
+
+-- The chapter's name, shown for a few seconds when it begins.
+local function showChapter(chapter: number)
+	chapterToken += 1
+	local token = chapterToken
+	local heading = t("UI_CHAPTER", { number = chapter })
+	chapterCard.Text = heading .. "\n" .. t(ObjectiveConfig.Chapters[chapter].title)
+	chapterCard.Visible = true
+	chapterCard.TextTransparency = 1
+	Theme.tween(chapterCard, 0.8, { TextTransparency = 0 })
+	task.delay(CHAPTER_SECONDS, function()
+		if token ~= chapterToken then
+			return
+		end
+		Theme.tween(chapterCard, 1, { TextTransparency = 1 })
+		task.wait(1.05)
+		if token == chapterToken then
+			chapterCard.Visible = false
+		end
+	end)
+end
+
+local function onChapterMaybeChanged()
+	local chapter = currentChapter()
+	if chapter ~= shownChapter then
+		shownChapter = chapter
+		if SessionController.getPhase() == GameState.Phase.Playing then
+			showChapter(chapter)
+		end
+	end
 end
 
 local function onPhase(phase: GameState.Phase)
-	if phase == GameState.Phase.Intro then
+	if phase == GameState.Phase.Loading or phase == GameState.Phase.Intro then
 		black.Visible = true
 		black.BackgroundTransparency = 0
-		showCard(
-			"STATION-09",
-			"17 October 1998. All contact with the station is lost.\n"
-				.. 'The last transmission: "IT KNOWS WE ARE LISTENING."\n\n'
-				.. "Years later, a new signal. You have been sent down to find out why.",
-			false
-		)
+		shownCard = phase
+		local title, body = cardText(phase)
+		showCard(title, body, false)
 	elseif phase == GameState.Phase.Playing then
 		if card.Visible then
 			hideCard()
 		end
+		shownCard = nil
+		shownChapter = currentChapter()
+		task.delay(1.5, showChapter, shownChapter)
 	elseif phase == GameState.Phase.Finale then
 		black.Visible = true
 		Theme.tween(black, 2.5, { BackgroundTransparency = 0 })
 	elseif phase == GameState.Phase.Ending then
 		black.Visible = true
 		black.BackgroundTransparency = 0
-		showCard(
-			"SIGNAL LOST",
-			`You reached the surface. Something came with you.\n\nEnd of the current build ({GameConfig.Version}).`
-				.. formatDuration(),
-			true
-		)
+		shownCard = "Ending"
+		local title, body = cardText("Ending")
+		showCard(title, body, true)
 	end
 end
 
@@ -177,7 +240,7 @@ local function build()
 	cardBody = Theme.make("TextLabel", {
 		AnchorPoint = Vector2.new(0.5, 0),
 		Position = UDim2.fromScale(0.5, 0.46),
-		Size = UDim2.new(0.86, 0, 0, 200),
+		Size = UDim2.new(0.86, 0, 0, 320),
 		BackgroundTransparency = 1,
 		Font = Theme.Font.Regular,
 		TextSize = 18,
@@ -197,16 +260,36 @@ local function build()
 		Font = Theme.Font.Medium,
 		TextSize = 15,
 		TextColor3 = Theme.Color.Text,
-		Text = "KEEP EXPLORING",
+		Text = "",
 		Modal = true,
 		Visible = false,
 		ZIndex = 6,
 	}, card)
 	Theme.border(cardButton, Theme.Color.Accent, 0.4)
-	for _, element in { cardTitle :: Instance, cardBody, cardButton } do
+	chapterCard = Theme.make("TextLabel", {
+		Name = "Chapter",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.36),
+		Size = UDim2.new(0.9, 0, 0, 80),
+		BackgroundTransparency = 1,
+		Font = Theme.Font.Bold,
+		TextSize = 26,
+		LineHeight = 1.3,
+		TextColor3 = Theme.Color.Text,
+		TextTransparency = 1,
+		TextWrapped = true,
+		Visible = false,
+		Text = "",
+		ZIndex = 4,
+	}, screen)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(900, 600) }, cardBody)
+	for _, element in { cardTitle :: Instance, cardBody, cardButton, chapterCard } do
 		Theme.autoScale(element)
 	end
-	cardButton.Activated:Connect(hideCard)
+	cardButton.Activated:Connect(function()
+		shownCard = nil
+		hideCard()
+	end)
 end
 
 function EffectsController.Start(_self: any)
@@ -223,6 +306,10 @@ function EffectsController.Start(_self: any)
 
 	SessionController.phaseChanged:Connect(onPhase)
 	onPhase(SessionController.getPhase())
+	ReplicatedStorage:GetAttributeChangedSignal(GameState.OBJECTIVE_ATTRIBUTE)
+		:Connect(onChapterMaybeChanged)
+	LocalizationController.changed:Connect(renderText)
+	renderText()
 
 	RunService.RenderStepped:Connect(renderInterference)
 end

@@ -1,0 +1,704 @@
+Key,Source,Context,Example,ru
+"BREAKER_LOCATION_1","Security Booth",,,"Пост охраны"
+"BREAKER_LOCATION_2","Power Room",,,"Силовая"
+"BREAKER_LOCATION_3","Maintenance",,,"Мастерская"
+"BREAKER_NAME_1","SECURITY BUS",,,"ШИНА ОХРАНЫ"
+"BREAKER_NAME_2","GENERATOR FEED",,,"ЛИНИЯ ГЕНЕРАТОРА"
+"BREAKER_NAME_3","MAINTENANCE LOOP",,,"РЕМОНТНЫЙ КОНТУР"
+"BREAKER_NAME_UNKNOWN","BREAKER",,,"АВТОМАТ"
+"CHAPTER_1_TITLE","THE FACILITY WAKES UP",,,"СТАНЦИЯ ПРОСЫПАЕТСЯ"
+"CHAPTER_2_TITLE","SYSTEM FAILURE",,,"ОТКАЗ СИСТЕМ"
+"CHAPTER_3_TITLE","THE SIGNAL",,,"СИГНАЛ"
+"CHAPTER_4_TITLE","RESTRICTED AREA",,,"ЗАКРЫТАЯ ЗОНА"
+"CHAPTER_5_TITLE","NO WAY BACK",,,"ПУТИ НАЗАД НЕТ"
+"CONSOLE_DISTRESS_1","DISTRESS CALL: TRANSMITTING ON ALL BANDS.",,,"СИГНАЛ БЕДСТВИЯ: ПЕРЕДАЧА НА ВСЕХ ДИАПАЗОНАХ."
+"CONSOLE_DISTRESS_2","WAITING FOR SURFACE...",,,"ОЖИДАНИЕ ОТВЕТА С ПОВЕРХНОСТИ..."
+"CONSOLE_DISTRESS_3","WARNING: REPLY ORIGIN IS NOT THE SURFACE.",,,"ВНИМАНИЕ: ОТВЕТ ПРИШЁЛ НЕ С ПОВЕРХНОСТИ."
+"CONSOLE_DISTRESS_4","MAIN LIFT: NO RESPONSE. FREIGHT LIFT: REQUIRES POWER AND EVACUATION ORDER.",,,"ГЛАВНЫЙ ЛИФТ: НЕТ ОТВЕТА. ГРУЗОВОЙ ЛИФТ: ТРЕБУЮТСЯ ПИТАНИЕ И ПРИКАЗ ОБ ЭВАКУАЦИИ."
+"CONSOLE_GENERATOR_1","GENERATOR 2: STANDBY. LOAD REQUEST: NONE.",,,"ГЕНЕРАТОР 2: РЕЖИМ ОЖИДАНИЯ. ЗАПРОС НАГРУЗКИ: НЕТ."
+"CONSOLE_GENERATOR_2","FAULT: VENTILATION INTERLOCK OPEN.",,,"НЕИСПРАВНОСТЬ: РАЗОМКНУТА БЛОКИРОВКА ВЕНТИЛЯЦИИ."
+"CONSOLE_GENERATOR_3","FAULT: COMMS RELAY BUS - FUSE REMOVED BY HAND.",,,"НЕИСПРАВНОСТЬ: ШИНА РЕЛЕ СВЯЗИ — ПРЕДОХРАНИТЕЛЬ ИЗВЛЕЧЁН ВРУЧНУЮ."
+"CONSOLE_TRACE_1","REFERENCE TAPE 9-114 LOADED. TRACE RUNNING...",,,"ЭТАЛОННАЯ ПЛЁНКА 9-114 ЗАГРУЖЕНА. ИДЁТ ТРАССИРОВКА..."
+"CONSOLE_TRACE_2","COMPARING WITH LIVE SIGNAL.",,,"СРАВНЕНИЕ С ТЕКУЩИМ СИГНАЛОМ."
+"CONSOLE_TRACE_3","SOURCE IS NOT EXTERNAL.",,,"ИСТОЧНИК НЕ ВНЕШНИЙ."
+"CONSOLE_TRACE_4","SOURCE DEPTH: BELOW STATION. FREIGHT LEVEL.",,,"ГЛУБИНА ИСТОЧНИКА: ПОД СТАНЦИЕЙ. ГРУЗОВОЙ УРОВЕНЬ."
+"CONSOLE_TRACE_5","CARRIER FOUND: CHANNEL {channel}. ROUTING TO COMMUNICATION CENTER.",,,"НЕСУЩАЯ НАЙДЕНА: КАНАЛ {channel}. ДАННЫЕ ПЕРЕДАНЫ В ЦЕНТР СВЯЗИ."
+"CONSOLE_TRACE_6","SOURCE IS RESPONDING TO THIS TERMINAL.",,,"ИСТОЧНИК ОТВЕЧАЕТ ЭТОМУ ТЕРМИНАЛУ."
+"DOCUMENT_BREAK_ROOM_NOTE_BODY","Dani -
+
+You asked me this morning why I said good night to you twice on the intercom. I only said it once.
+
+I asked the others. Everyone has one of these stories now. Nobody tells them at the table any more. We just listen to the vents and count who is in the room.
+
+If I call you on the intercom again, ask me what we had for dinner on your birthday. It never knows the small things. Not yet.
+
+- T.",,,"Дани,
+
+отвечаю на твой утренний вопрос — зачем я дважды желаю тебе спокойной ночи по интеркому. От меня это было один раз.
+
+Спрашиваю остальных. Теперь такая история есть у каждого. За столом их больше не рассказывают. Мы просто слушаем вентиляцию и считаем, сколько нас в комнате.
+
+Если я снова вызову тебя по интеркому — спроси, что мы ели на ужин в твой день рождения. Мелочей оно не знает. Пока не знает.
+
+— Т."
+"DOCUMENT_BREAK_ROOM_NOTE_DATE","16 OCT 1998",,,"16 ОКТ 1998"
+"DOCUMENT_BREAK_ROOM_NOTE_TITLE","NOTE LEFT ON THE TABLE",,,"ЗАПИСКА, ОСТАВЛЕННАЯ НА СТОЛЕ"
+"DOCUMENT_CONTAINMENT_REPORT_BODY","We tried to hold the first copy in this cell.
+
+Walls do nothing. It was never in the cell the way we are in a room. It stayed while the microphones in here were live, because we were listening to it. When Hale cut the microphones it was simply somewhere else - wherever the nearest receiver was.
+
+Conclusion, for whoever opens this door: you cannot lock it in. You can only stop giving it places to be.
+
+The analysis console next door can still find it. Finding it is also how it finds you.",,,"В этой камере мы пытались удержать первую копию.
+
+Стены ничего не дают. Оно никогда не находилось в камере так, как мы находимся в комнате. Оно оставалось здесь, пока работали микрофоны, — потому что мы его слушали. Потом д-р Хейл отключает микрофоны, и оно просто оказывается где-то ещё: там, где ближайший приёмник.
+
+Вывод — для того, кто откроет эту дверь: запереть его нельзя. Можно только перестать давать ему места, где быть.
+
+Консоль анализа за стеной всё ещё способна его найти. Но найти его — значит дать ему найти вас."
+"DOCUMENT_CONTAINMENT_REPORT_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_CONTAINMENT_REPORT_TITLE","CONTAINMENT - FINAL ENTRY",,,"ИЗОЛЯТОР — ПОСЛЕДНЯЯ ЗАПИСЬ"
+"DOCUMENT_DIRECTOR_MEMO_BODY","STATION-09 was built to listen. Not to the sky: to the rock beneath us, where Signal 9 has been repeating since before the shaft was sunk.
+
+For a year we believed we were studying it. I now believe the arrangement is the other way round. Every receiver we switch on gives it one more ear, and it has started to answer in voices we recognise.
+
+Effective tonight:
+   -  No transmissions of any kind toward the source.
+   -  The communications relay stays open. Okafor has the fuse.
+   -  If the receivers cannot be kept off, we take the power away from them. All of it.
+
+It cannot use what is not listening. Remember that if I am not here to say it.
+
+- Director E. Marsh",,,"STATION-09 построили, чтобы слушать. Не небо — породу под нами, где Сигнал 9 повторяется с тех времён, когда ствола шахты ещё не было.
+
+Целый год мы считали, что изучаем его. Теперь я думаю, что всё обстоит наоборот. Каждый включённый приёмник даёт ему ещё одно ухо, и оно начало отвечать голосами, которые мы узнаём.
+
+С сегодняшнего вечера:
+   -  Никаких передач в сторону источника. Никаких.
+   -  Реле связи остаётся разомкнутым. Предохранитель хранит Окафор.
+   -  Если приёмники не удастся держать выключенными, мы отнимем у них питание. Всё, до последнего ватта.
+
+Оно не может пользоваться тем, что не слушает. Помните об этом, если меня не будет рядом, чтобы напомнить.
+
+— Директор Э. Марш"
+"DOCUMENT_DIRECTOR_MEMO_DATE","15 OCT 1998",,,"15 ОКТ 1998"
+"DOCUMENT_DIRECTOR_MEMO_TITLE","FROM THE DIRECTOR - ALL SECTION HEADS",,,"ОТ ДИРЕКТОРА — ВСЕМ НАЧАЛЬНИКАМ ОТДЕЛОВ"
+"DOCUMENT_EVACUATION_NOTICE_BODY","1.  The freight lift is locked down in normal operation.
+2.  In an emergency the duty officer authorises evacuation from the override console in the observation chamber.
+3.  The alarm sounds on every level. Proceed to the lift at the north end of the cargo corridor.
+4.  The lift leaves when all personnel are aboard.
+
+Written underneath in marker:
+
+COUNT HEADS. THEN COUNT AGAIN.",,,"1.  В штатном режиме грузовой лифт заблокирован.
+2.  В аварийной ситуации дежурный разрешает эвакуацию с пульта эвакуации в камере наблюдения.
+3.  Сигнал тревоги звучит на всех уровнях. Следуйте к лифту в северном конце грузового коридора.
+4.  Лифт отправляется, когда весь персонал на борту.
+
+Ниже приписано маркером:
+
+ПЕРЕСЧИТАЙТЕ ЛЮДЕЙ. ПОТОМ ПЕРЕСЧИТАЙТЕ ЕЩЁ РАЗ."
+"DOCUMENT_EVACUATION_NOTICE_DATE","POSTED 1996",,,"ВЫВЕШЕНО В 1996"
+"DOCUMENT_EVACUATION_NOTICE_TITLE","FREIGHT WING - EVACUATION PROCEDURE",,,"ГРУЗОВОЕ КРЫЛО — ПОРЯДОК ЭВАКУАЦИИ"
+"DOCUMENT_EXAMINATION_LOG_BODY","Fourth technician this week reporting the same thing: hearing their own voice on the intercom while they were not speaking.
+
+Hearing normal. No fever. Each of them can repeat, word for word, what the voice said. None of them remembers ever saying it.
+
+Weller asked me today whether a recording can be made of something that has not happened yet. I have moved him to the patient room for observation.
+
+Requesting the quarantine corridor be sealed until we understand what is being copied, and from whom.
+
+- Dr. A. Reyes, Station Physician",,,"Четвёртый техник за неделю, и всё с тем же: слышат по интеркому собственный голос, когда сами молчат.
+
+Слух в норме. Температуры нет. Каждый может дословно повторить, что сказал голос. Никто не помнит, чтобы когда-либо это говорил.
+
+Сегодня Уэллер спрашивает меня, можно ли записать то, чего ещё не произошло. Перевожу его в палату, под наблюдение.
+
+Прошу задраить карантинный коридор, пока мы не поймём, что именно копируется — и с кого.
+
+— Д-р А. Рейес, врач станции"
+"DOCUMENT_EXAMINATION_LOG_DATE","14 OCT 1998",,,"14 ОКТ 1998"
+"DOCUMENT_EXAMINATION_LOG_TITLE","MEDICAL - STAFF EXAMINATION LOG",,,"МЕДБЛОК — ЖУРНАЛ ОСМОТРОВ ПЕРСОНАЛА"
+"DOCUMENT_FEEDER_NOTE_BODY","Okafor to night shift:
+
+Emergency supply only feeds lighting. Anything else has to be switched in by hand from this room. The communications relay is the big cabinet on the back wall; the four feeders on the posts carry the loads written on them.
+
+Director wants the relay left OFF tonight. Says the receivers are 'more than switched on'. I do not know what that means and I did not ask.
+
+If you hear the relay close by itself, do not go and look. Call the desk.",,,"Окафор — ночной смене:
+
+Аварийная сеть питает только освещение. Всё остальное подключается вручную, из этой комнаты. Реле связи — большой шкаф у дальней стены; четыре фидера на стойках дают ту нагрузку, что на них написана.
+
+Директор требует, чтобы этой ночью реле оставалось ВЫКЛЮЧЕННЫМ. Говорит, приёмники «больше чем включены». Я не знаю, что это значит, и не спрашиваю.
+
+Услышите, что реле замкнулось само, — не ходите смотреть. Звоните на пост."
+"DOCUMENT_FEEDER_NOTE_DATE","16 OCT 1998",,,"16 ОКТ 1998"
+"DOCUMENT_FEEDER_NOTE_TITLE","SHIFT HANDOVER - ELECTRICAL CONTROL",,,"ПЕРЕДАЧА СМЕНЫ — ЭЛЕКТРОЩИТОВАЯ"
+"DOCUMENT_INCIDENT_LOG_BODY","02:10  Night shift reports voices on channel 4. Channel 4 has been unassigned since August.
+02:40  Dr. Hale called the desk from the laboratory. Dr. Hale is standing in front of me.
+03:05  Camera 6 shows someone at the east end of the main corridor. The corridor is empty. I checked twice.
+03:30  Director orders every receiver switched off. They keep switching themselves back on.
+03:52  Director's order: kill the power by hand. Emergency breakers pulled. Evacuating through the freight lift.
+
+The last line is in different handwriting:
+IT KNOWS WE ARE LISTENING.",,,"02:10  Ночная смена докладывает о голосах на канале 4. Канал 4 с августа ни за кем не закреплён.
+02:40  На пост звонит д-р Хейл, из лаборатории. Д-р Хейл стоит прямо передо мной.
+03:05  Камера 6 показывает человека в восточном конце главного коридора. Коридор пуст. Проверено дважды.
+03:30  Директор приказывает выключить все приёмники. Они снова включаются сами.
+03:52  Приказ директора: обесточить всё вручную. Аварийные автоматы отключены. Уходим через грузовой лифт.
+
+Последняя строка написана другим почерком:
+ОНО ЗНАЕТ, ЧТО МЫ СЛУШАЕМ."
+"DOCUMENT_INCIDENT_LOG_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_INCIDENT_LOG_TITLE","INCIDENT LOG - SECURITY DESK",,,"ЖУРНАЛ ПРОИСШЕСТВИЙ — ПОСТ ОХРАНЫ"
+"DOCUMENT_MAINTENANCE_REPORT_BODY","Work done on the Director's order, no ticket raised:
+
+Pulled the main fuse from the communications relay cabinet in Electrical Control. With the fuse out, the relay cannot close and the lab and quarantine bulkheads stay sealed whatever the consoles say.
+
+I was told to destroy the fuse. I have not. If somebody ever has to get those doors open again they will need it. It is in Storage 102, on the shelf by the door, where nobody looks.
+
+Whoever fits it: the relay only closes on an exact load. Add up the feeders before you throw them. An overload down there is the loudest thing in the building.
+
+- R. Okafor",,,"Работы выполнены по приказу директора, без оформления заявки:
+
+Из шкафа реле связи в электрощитовой вынут главный предохранитель. Без него реле не замкнётся, и гермодвери лаборатории и карантина останутся задраенными, что бы ни показывали консоли.
+
+Мне велели уничтожить предохранитель. Он цел. Если кому-нибудь однажды придётся снова открывать эти двери, без него не обойтись. Он на складе 102, на полке у двери — там, куда никто не смотрит.
+
+Тому, кто будет его ставить: реле замыкается только при точной нагрузке. Сложите фидеры в уме, прежде чем их включать. Перегрузка там, внизу, — самый громкий звук во всём здании.
+
+— Р. Окафор"
+"DOCUMENT_MAINTENANCE_REPORT_DATE","16 OCT 1998",,,"16 ОКТ 1998"
+"DOCUMENT_MAINTENANCE_REPORT_TITLE","MAINTENANCE REPORT - RELAY BUS",,,"ОТЧЁТ ТЕХСЛУЖБЫ — ШИНА РЕЛЕ"
+"DOCUMENT_OPERATOR_NOTE_BODY","To whoever comes down after us.
+
+The mast is the only thing in this station that reaches the surface. That is why Marsh had me lock the communication center, and that is why it wants in. Everything else it learns down here stays down here. The mast is its way to be heard.
+
+I split the door code so that no single voice could give it away.
+
+FIRST two digits:   {half}
+
+Dr. Reyes has the last two, in the patient room behind the quarantine seal.
+
+If you do open that door: do not answer anything that answers too fast.
+
+- S. Pike",,,"Тому, кто спустится сюда после нас.
+
+Мачта — единственное на этой станции, что дотягивается до поверхности. Поэтому по приказу директора я запер центр связи, и поэтому оно рвётся внутрь. Всё остальное, чему оно учится здесь, внизу, внизу и остаётся. Мачта — его способ быть услышанным.
+
+Я разделил код от двери, чтобы ни один голос не мог выдать его целиком.
+
+ПЕРВЫЕ две цифры:   {half}
+
+Последние две хранит д-р Рейес — в палате, за карантинной гермодверью.
+
+Если всё-таки откроете эту дверь: не отвечайте тому, что отвечает слишком быстро.
+
+— С. Пайк"
+"DOCUMENT_OPERATOR_NOTE_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_OPERATOR_NOTE_TITLE","NOTE - RADIO OPERATOR'S DESK",,,"ЗАПИСКА — СТОЛ РАДИСТА"
+"DOCUMENT_PATIENT_CHART_BODY","00:30  Patient calm. Says he can hear himself in the laboratory, 'getting better at it'.
+01:15  Patient asks me not to switch the intercom on. I have not touched it. It is on.
+02:20  Patient asleep. The voice on the intercom is still his.
+
+Scribbled across the bottom, in another hand:
+
+Reyes - Pike left his half with you in case he does not make it to the lift. Comm center door, LAST two digits:   {half}
+The first two are in his office. Do not say them out loud.",,,"00:30  Пациент спокоен. Говорит, что слышит себя в лаборатории и что «у него получается всё лучше».
+01:15  Пациент просит меня не включать интерком. Я к нему не прикасаюсь. Он включён.
+02:20  Пациент спит. Голос в интеркоме — по-прежнему его.
+
+Внизу наспех приписано другой рукой:
+
+Рейес, Пайк оставил свою половину у вас — на случай, если не дойдёт до лифта. Дверь центра связи, ПОСЛЕДНИЕ две цифры:   {half}
+Первые две — у него в кабинете. Не произносите их вслух."
+"DOCUMENT_PATIENT_CHART_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_PATIENT_CHART_TITLE","PATIENT CHART - J. WELLER",,,"КАРТА ПАЦИЕНТА — ДЖ. УЭЛЛЕР"
+"DOCUMENT_PERSONNEL_FILE_BODY","Staff on station, night of 16-17 October: 31.
+
+Marsh, E. (Director) ......... remained to pull the breakers
+Hale, M. ..................... lift
+Reyes, A. .................... lift
+Okafor, R. ................... lift
+Pike, S. (Radio) ............. lift
+Weller, J. ................... quarantine - NOT to be released
+(25 further names) ........... lift
+
+Count at the lift doors: 30.
+Count again at the lift doors: 30.
+
+Stapled to the roll: Restricted archive, door code {code}. Marsh's files. Read them if you want to know what we let upstairs.",,,"Персонал на станции в ночь с 16 на 17 октября: 31.
+
+Марш Э. (директор) ........... остаётся отключать автоматы
+Хейл М. ...................... лифт
+Рейес А. ..................... лифт
+Окафор Р. .................... лифт
+Пайк С. (радист) ............. лифт
+Уэллер Дж. ................... карантин — НЕ выпускать
+(ещё 25 фамилий) ............. лифт
+
+Пересчёт у дверей лифта: 30.
+Повторный пересчёт у дверей лифта: 30.
+
+К списку приколото скрепкой: Закрытый архив, код двери {code}. Папки директора. Прочтите, если хотите знать, что мы пустили наверх."
+"DOCUMENT_PERSONNEL_FILE_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_PERSONNEL_FILE_TITLE","PERSONNEL - EVACUATION ROLL",,,"ПЕРСОНАЛ — ЭВАКУАЦИОННЫЙ СПИСОК"
+"DOCUMENT_QUARANTINE_ORDER_BODY","At 21:40 technician J. Weller was observed asleep in the patient room.
+At 21:40 technician J. Weller was observed in the main laboratory, working.
+
+Both observations are confirmed. The one in the laboratory did not blink while I watched it. It knew my name, my daughter's name, and the last thing I said to Weller in private.
+
+The staff have started calling it THE COPY. The name is accurate and I am adopting it.
+
+The quarantine seal is to be closed from the relay and stay closed. Nobody opens it for a voice. Not even mine.
+
+- Dr. A. Reyes",,,"В 21:40 техник Дж. Уэллер наблюдался в палате: спал.
+В 21:40 техник Дж. Уэллер наблюдался в главной лаборатории: работал.
+
+Оба наблюдения подтверждены. Тот, что в лаборатории, под моим взглядом ни разу не моргнул. Он знал моё имя, имя моей дочери и последнее, что Уэллер слышал от меня наедине.
+
+Персонал начал называть это THE COPY. Название точное, и я его принимаю.
+
+Карантинную гермодверь закрыть от реле и держать закрытой. Никто не открывает её на голос. Даже на мой.
+
+— Д-р А. Рейес"
+"DOCUMENT_QUARANTINE_ORDER_DATE","16 OCT 1998",,,"16 ОКТ 1998"
+"DOCUMENT_QUARANTINE_ORDER_TITLE","QUARANTINE ORDER 3",,,"ПРИКАЗ О КАРАНТИНЕ 3"
+"DOCUMENT_RESEARCH_NOTE_BODY","The signal is not a message. We spent a year trying to decode it and there is nothing to decode.
+
+It is closer to a mirror. Whatever we transmit toward it comes back hours later, slightly wrong. First tones. Then our call signs. Last week it was Weller's voice, reading a report he has not written yet.
+
+The recordings never repeat what we said. They say what we would say.
+
+Recommendation: stop listening. I am aware of how that sounds.
+
+- Dr. M. Hale",,,"Сигнал — не послание. Мы год пытались его расшифровать, а расшифровывать там нечего.
+
+Он больше похож на зеркало. Всё, что мы передаём в его сторону, через несколько часов возвращается — чуть-чуть неправильным. Сначала тоны. Потом наши позывные. На прошлой неделе это был голос Уэллера: он читал отчёт, который Уэллер ещё не написал.
+
+Записи никогда не повторяют того, что мы сказали. Они говорят то, что мы сказали бы.
+
+Рекомендация: перестать слушать. Я понимаю, как это звучит.
+
+— Д-р М. Хейл"
+"DOCUMENT_RESEARCH_NOTE_DATE","11 OCT 1998",,,"11 ОКТ 1998"
+"DOCUMENT_RESEARCH_NOTE_TITLE","RESEARCH NOTE - SIGNAL 9",,,"ИССЛЕДОВАТЕЛЬСКАЯ ЗАМЕТКА — СИГНАЛ 9"
+"DOCUMENT_RESTRICTED_FILE_BODY","What I have not told the section heads.
+
+Signal 9 does not come from a thing. As far as we can measure, the signal is the thing. It has no shape of its own, so it borrows: first a voice, then a habit of speech, then - once it has listened to one person for long enough - the whole person, standing in a corridor.
+
+A copy is not a ghost and it is not a twin. It is the signal wearing what it learned. It is drawn to anything that makes it clearer: a transmitter, a live receiver, a raised voice, running feet. Darkness and silence are not safety. They are only harder for it to read.
+
+Thirty of us went up in the freight lift. The surface log says thirty-one arrived.
+
+I am staying to make sure the power stays off. If you are reading this by electric light, someone has undone my work.
+
+- E. Marsh",,,"То, о чём я не говорю начальникам отделов.
+
+Сигнал 9 не исходит от чего-то. Насколько мы способны измерить, сигнал и есть это что-то. Своего облика у него нет, поэтому оно заимствует: сначала голос, потом манеру речи, а потом — когда достаточно долго слушает одного человека — всего человека целиком, стоящего в коридоре.
+
+Копия — не призрак и не двойник. Это сигнал, надевший то, чему научился. Его тянет ко всему, что делает его отчётливее: к передатчику, к включённому приёмнику, к громкому голосу, к бегущим шагам. Темнота и тишина — не спасение. В них ему просто труднее читать.
+
+Нас поднялось в грузовом лифте тридцать. В журнале на поверхности записано: прибыл тридцать один.
+
+Я остаюсь — проследить, чтобы питание не включили. Если вы читаете это при электрическом свете, значит, кто-то перечеркнул мою работу.
+
+— Э. Марш"
+"DOCUMENT_RESTRICTED_FILE_DATE","17 OCT 1998",,,"17 ОКТ 1998"
+"DOCUMENT_RESTRICTED_FILE_TITLE","RESTRICTED - DIRECTOR'S FILE 9/C",,,"ЗАКРЫТО — ДЕЛО ДИРЕКТОРА 9/C"
+"DOCUMENT_SERVER_LOG_BODY","17 OCT 1998 03:52   MAINS LOST. RECORDING ON BATTERY.
+17 OCT 1998 04:10   FREIGHT LIFT DEPARTED.
+17 OCT 1998 04:11   OUTBOUND TRANSMISSION, MAST. OPERATOR: NONE.
+                    CONTENT: 'STATION NINE... CAN ANYONE HEAR ME?'
+17 OCT 1998 04:12   BATTERY EXHAUSTED.
+
+(power restored)
+
+            00:00   OUTBOUND TRANSMISSION, MAST. OPERATOR: NONE.
+                    CONTENT: 'STATION NINE... CAN ANYONE HEAR ME?'
+
+The call that brought you here was sent from this room. Nobody was in it.",,,"17 ОКТ 1998 03:52   СЕТЬ ПОТЕРЯНА. ЗАПИСЬ ОТ БАТАРЕИ.
+17 ОКТ 1998 04:10   ГРУЗОВОЙ ЛИФТ УШЁЛ.
+17 ОКТ 1998 04:11   ИСХОДЯЩАЯ ПЕРЕДАЧА, МАЧТА. ОПЕРАТОР: НЕТ.
+                    СОДЕРЖАНИЕ: «СТАНЦИЯ ДЕВЯТЬ... МЕНЯ КТО-НИБУДЬ СЛЫШИТ?»
+17 ОКТ 1998 04:12   БАТАРЕЯ РАЗРЯЖЕНА.
+
+(питание восстановлено)
+
+            00:00   ИСХОДЯЩАЯ ПЕРЕДАЧА, МАЧТА. ОПЕРАТОР: НЕТ.
+                    СОДЕРЖАНИЕ: «СТАНЦИЯ ДЕВЯТЬ... МЕНЯ КТО-НИБУДЬ СЛЫШИТ?»
+
+Вызов, который привёл вас сюда, был отправлен из этой комнаты. В ней никого не было."
+"DOCUMENT_SERVER_LOG_DATE","LAST ENTRY",,,"ПОСЛЕДНЯЯ ЗАПИСЬ"
+"DOCUMENT_SERVER_LOG_TITLE","RECORDING SERVER - AUTOMATIC LOG",,,"СЕРВЕР ЗАПИСИ — АВТОМАТИЧЕСКИЙ ЖУРНАЛ"
+"DOCUMENT_SOURCE_LOG_BODY","I am looking at it through the glass. There is nothing there to look at - a column of old rock and our own instruments pointed at it. And still every needle moves when I speak.
+
+We asked for a year what it wants. I think the question is wrong. It does not want to leave this place. It wants to be heard, and it goes wherever hearing goes. Anyone who has listened to it carries a little of it. Enough of us, far enough away, and it will not need the rock at all.
+
+So understand what an evacuation is. The lift does not take people away from Signal 9. It takes Signal 9 to people.
+
+I am authorising it anyway. They are my staff and they are frightened.
+
+If you are standing where I stood: you have already heard it. I am sorry. Go home, and be careful who you talk to.
+
+- E. Marsh",,,"Я смотрю на него через стекло. Смотреть там не на что: столб древней породы и наши же приборы, наведённые на него. И всё-таки каждая стрелка вздрагивает, когда я говорю.
+
+Мы целый год спрашивали, чего оно хочет. Думаю, сам вопрос неверен. Оно не хочет отсюда уйти. Оно хочет, чтобы его слышали, и идёт туда, куда идёт слух. Каждый, кто его слушал, уносит в себе его частицу. Когда нас станет достаточно много и достаточно далеко, порода ему будет уже не нужна.
+
+Так что поймите, что такое эвакуация. Лифт не увозит людей от Сигнала 9. Он везёт Сигнал 9 к людям.
+
+Я всё равно её разрешаю. Это мои люди, и им страшно.
+
+Если вы стоите там, где сейчас стою я, — вы его уже слышали. Простите. Возвращайтесь домой и будьте осторожны с теми, с кем говорите.
+
+— Э. Марш"
+"DOCUMENT_SOURCE_LOG_DATE","17 OCT 1998, 03:40",,,"17 ОКТ 1998, 03:40"
+"DOCUMENT_SOURCE_LOG_TITLE","OBSERVATION LOG - SOURCE CHAMBER",,,"ЖУРНАЛ НАБЛЮДЕНИЙ — КАМЕРА ИСТОЧНИКА"
+"DOCUMENT_STARTUP_MEMO_BODY","If main power is lost, the emergency supply has to be brought up by hand.
+
+Engage the breakers in this exact order:
+   1.  {name1}  ({location1})
+   2.  {name2}  ({location2})
+   3.  {name3}  ({location3})
+
+Then throw the main lever in the Power Room.
+
+A breaker thrown out of turn trips straight back out. It is also loud. Since last month I would rather not be loud down here.
+
+- R. Okafor, Maintenance",,,"Если пропало основное питание, аварийное приходится поднимать вручную.
+
+Включайте автоматы строго в таком порядке:
+   1.  {name1}  ({location1})
+   2.  {name2}  ({location2})
+   3.  {name3}  ({location3})
+
+Затем переведите главный рубильник в силовой.
+
+Автомат, включённый не в свой черёд, тут же выбивает. И это громко. А с прошлого месяца шуметь здесь, внизу, мне совсем не хочется.
+
+— Р. Окафор, техслужба"
+"DOCUMENT_STARTUP_MEMO_DATE","02 SEP 1998",,,"02 СЕН 1998"
+"DOCUMENT_STARTUP_MEMO_TITLE","MAINTENANCE MEMO 14 - EMERGENCY START-UP",,,"ПАМЯТКА ТЕХСЛУЖБЫ 14 — АВАРИЙНЫЙ ЗАПУСК"
+"DOCUMENT_TAPE_TRANSCRIPT_BODY","[Recorded in the signal chamber. Dr. Hale alone. Original reel filed in the laboratory archive.]
+
+HALE: Test one hundred fourteen. Transmitting call sign.
+[11 seconds of carrier]
+VOICE: Test one hundred fifteen. Transmitting call sign.
+HALE: ...That is tomorrow's test.
+VOICE: That is tomorrow's test.
+HALE: Who is this?
+VOICE: Hale.
+
+[Note in margin, Hale's handwriting:] It answered before I finished asking.",,,"[Записано в камере сигнала. В камере только д-р Хейл. Оригинал катушки сдан в архив лаборатории.]
+
+ХЕЙЛ: Тест сто четырнадцать. Передаю позывной.
+[11 секунд несущей]
+ГОЛОС: Тест сто пятнадцать. Передаю позывной.
+ХЕЙЛ: ...Это завтрашний тест.
+ГОЛОС: Это завтрашний тест.
+ХЕЙЛ: Кто это?
+ГОЛОС: Хейл.
+
+[Пометка на полях, почерк — Хейл:] Оно ответило раньше, чем прозвучал вопрос."
+"DOCUMENT_TAPE_TRANSCRIPT_DATE","12 OCT 1998",,,"12 ОКТ 1998"
+"DOCUMENT_TAPE_TRANSCRIPT_TITLE","TRANSCRIPT - TAPE 9-114",,,"РАСШИФРОВКА — ПЛЁНКА 9-114"
+"DOOR_REASON_CODE","Locked. It wants a code.",,,"Заперто. Нужен код."
+"DOOR_REASON_CONTAINMENT","Containment seal. Only the analysis console can release it.",,,"Затвор изоляции. Снять его может только консоль анализа."
+"DOOR_REASON_EVACUATION","Locked down. It opens only for an authorised evacuation.",,,"Заблокировано. Откроется только при разрешённой эвакуации."
+"DOOR_REASON_FREIGHT","No power in the freight wing. The generator is only on standby.",,,"В грузовом крыле нет питания. Генератор стоит в режиме ожидания."
+"DOOR_REASON_POWER","The bulkhead is dead. It runs off the emergency supply.",,,"Гермодверь обесточена. Она запитана от аварийной сети."
+"DOOR_REASON_RELAY","Sealed. This bulkhead is held shut from the communications relay.",,,"Задраено. Эту гермодверь держит закрытой реле связи."
+"INTERACTION_AUTHORISE_EVACUATION","Authorise evacuation",,,"Разрешить эвакуацию"
+"INTERACTION_CALL_ELEVATOR","Call the elevator",,,"Вызвать лифт"
+"INTERACTION_DEFAULT","Interact",,,"Использовать"
+"INTERACTION_ENTER_CODE","Enter code",,,"Ввести код"
+"INTERACTION_FIT_FUSE","Fit the fuse",,,"Установить предохранитель"
+"INTERACTION_FULL_LOAD","Switch to full load",,,"Дать полную нагрузку"
+"INTERACTION_INSPECT","Inspect",,,"Осмотреть"
+"INTERACTION_LISTEN","Listen",,,"Слушать"
+"INTERACTION_LISTEN_AGAIN","Listen again",,,"Слушать ещё раз"
+"INTERACTION_LOCK_CHANNEL","Lock this channel",,,"Захватить канал"
+"INTERACTION_RAISE_MAST","Raise the mast",,,"Поднять мачту"
+"INTERACTION_READ","Read",,,"Прочитать"
+"INTERACTION_RESTART_SERVERS","Restart the servers",,,"Перезапустить серверы"
+"INTERACTION_RUN_TRACE","Run the trace",,,"Запустить трассировку"
+"INTERACTION_SEND_DISTRESS","Use the console",,,"Сесть за консоль"
+"INTERACTION_START_FANS","Start the fans",,,"Запустить вентиляторы"
+"INTERACTION_START_LIFT","Start the lift",,,"Запустить лифт"
+"INTERACTION_SWITCH_BREAKER","Switch breaker",,,"Включить автомат"
+"INTERACTION_SWITCH_FEEDER","Switch feeder",,,"Переключить фидер"
+"INTERACTION_TAKE","Take",,,"Взять"
+"INTERACTION_THROW_LEVER","Throw the main lever",,,"Перевести рубильник"
+"INTERACTION_TRY_DOOR","Try the door",,,"Толкнуть дверь"
+"INTERACTION_TUNE_DOWN","Channel down",,,"Канал ниже"
+"INTERACTION_TUNE_UP","Channel up",,,"Канал выше"
+"LABEL_ANALYSIS","SIGNAL ANALYSIS",,,"АНАЛИЗ СИГНАЛА"
+"LABEL_ANALYSIS_DONE","CARRIER: CHANNEL {channel}",,,"НЕСУЩАЯ: КАНАЛ {channel}"
+"LABEL_ANALYSIS_IDLE","INSERT REFERENCE TAPE",,,"ВСТАВЬТЕ ЭТАЛОННУЮ ПЛЁНКУ"
+"LABEL_DOOR_SEALED","SEALED",,,"ЗАДРАЕНО"
+"LABEL_EVAC","EVACUATION OVERRIDE",,,"ПУЛЬТ ЭВАКУАЦИИ"
+"LABEL_EVAC_AUTHORISED","AUTHORISED",,,"РАЗРЕШЕНА"
+"LABEL_EVAC_READY","READY",,,"ГОТОВ"
+"LABEL_FANS","VENTILATION",,,"ВЕНТИЛЯЦИЯ"
+"LABEL_FANS_RUNNING","RUNNING",,,"РАБОТАЕТ"
+"LABEL_FANS_STOPPED","STOPPED",,,"ОСТАНОВЛЕНА"
+"LABEL_FEEDER","FEEDER {number}   {value} kW",,,"ФИДЕР {number}   {value} кВт"
+"LABEL_FEEDER_CLOSED","CLOSED",,,"ЗАМКНУТ"
+"LABEL_FEEDER_OPEN","OPEN",,,"РАЗОМКНУТ"
+"LABEL_GENERATOR","GENERATOR 2",,,"ГЕНЕРАТОР 2"
+"LABEL_GENERATOR_FULL","FULL LOAD",,,"ПОЛНАЯ НАГРУЗКА"
+"LABEL_GENERATOR_STANDBY","STANDBY",,,"РЕЖИМ ОЖИДАНИЯ"
+"LABEL_KEYPAD","ACCESS CODE",,,"КОД ДОСТУПА"
+"LABEL_KEYPAD_DEAD","NO POWER",,,"НЕТ ПИТАНИЯ"
+"LABEL_KEYPAD_LOCKED","LOCKED",,,"ЗАПЕРТО"
+"LABEL_KEYPAD_OPEN","OPEN",,,"ОТКРЫТО"
+"LABEL_LEVER","EMERGENCY POWER",,,"АВАРИЙНОЕ ПИТАНИЕ"
+"LABEL_LEVER_BREAKERS","{engaged}/{total} BREAKERS",,,"АВТОМАТЫ {engaged}/{total}"
+"LABEL_LEVER_ON","ON",,,"ВКЛ"
+"LABEL_LEVER_READY","READY",,,"ГОТОВ"
+"LABEL_LIFT","FREIGHT LIFT",,,"ГРУЗОВОЙ ЛИФТ"
+"LABEL_LIFT_LOCKED","NOT AUTHORISED",,,"НЕТ РАЗРЕШЕНИЯ"
+"LABEL_LIFT_READY","READY",,,"ГОТОВ"
+"LABEL_MAST","ANTENNA MAST",,,"АНТЕННАЯ МАЧТА"
+"LABEL_MAST_LOWERED","LOWERED",,,"ОПУЩЕНА"
+"LABEL_MAST_RAISED","RAISED",,,"ПОДНЯТА"
+"LABEL_NO_POWER","NO POWER",,,"НЕТ ПИТАНИЯ"
+"LABEL_OFFLINE","OFFLINE",,,"ОТКЛЮЧЕНО"
+"LABEL_ONLINE","ONLINE",,,"В РАБОТЕ"
+"LABEL_RECEIVER","RECEIVER",,,"ПРИЁМНИК"
+"LABEL_RECEIVER_INCOMING","INCOMING SIGNAL",,,"ВХОДЯЩИЙ СИГНАЛ"
+"LABEL_RECEIVER_NO_SIGNAL","NO SIGNAL",,,"НЕТ СИГНАЛА"
+"LABEL_RECEIVER_OFFLINE","OFFLINE",,,"ОТКЛЮЧЁН"
+"LABEL_RELAY","COMMS RELAY",,,"РЕЛЕ СВЯЗИ"
+"LABEL_RELAY_LOAD","LOAD {load} / {target} kW",,,"НАГРУЗКА {load} / {target} кВт"
+"LABEL_RELAY_NO_FUSE","NO FUSE",,,"НЕТ ПРЕДОХРАНИТЕЛЯ"
+"LABEL_RELAY_ONLINE","ONLINE",,,"В РАБОТЕ"
+"LABEL_SERVERS","RECORDING SERVERS",,,"СЕРВЕРЫ ЗАПИСИ"
+"LABEL_STATUS_ENGAGED","ENGAGED {position}/{total}",,,"ВКЛЮЧЁН {position}/{total}"
+"LABEL_STATUS_LIVE","LIVE",,,"ПОД ТОКОМ"
+"LABEL_STATUS_OFF","OFF",,,"ВЫКЛ"
+"LABEL_STATUS_TRIPPED","TRIPPED",,,"ВЫБИТ"
+"LABEL_TUNER","CHANNEL {channel}",,,"КАНАЛ {channel}"
+"LABEL_TUNER_LOCKED","CARRIER LOCKED",,,"НЕСУЩАЯ ЗАХВАЧЕНА"
+"LABEL_TUNER_SEARCHING","NO LOCK",,,"НЕТ ЗАХВАТА"
+"NOTIFY_ARCHIVE_OPEN","{name} opened the restricted archive.",,,"{name} открывает закрытый архив."
+"NOTIFY_BATTERY_FULL","Your flashlight battery is already full.",,,"Батарея фонарика и так полностью заряжена."
+"NOTIFY_BATTERY_REPLACED","Battery replaced.",,,"Аккумулятор заменён."
+"NOTIFY_BREAKERS_ALL","All breakers engaged. Throw the main lever in the Power Room.",,,"Все автоматы включены. Переведите главный рубильник в силовой."
+"NOTIFY_BREAKER_ALREADY","{name} is already engaged.",,,"{name}: автомат уже включён."
+"NOTIFY_BREAKER_ENGAGED","{name} engaged ({engaged}/{total}).",,,"{name}: автомат включён ({engaged}/{total})."
+"NOTIFY_BREAKER_LIVE","{name} is live.",,,"{name}: под напряжением."
+"NOTIFY_BREAKER_REJECTED","{name} trips straight back out. It is not next in the start-up order.",,,"{name}: автомат тут же выбивает. Его очередь в порядке запуска ещё не пришла."
+"NOTIFY_CARRIER_ALREADY","The desk is already locked onto the carrier.",,,"Пульт уже держит несущую."
+"NOTIFY_CARRIER_LOCKED","Carrier locked on channel {channel}.",,,"Несущая захвачена на канале {channel}."
+"NOTIFY_CARRIER_MISS","Only static on channel {channel}. The trace named a different one.",,,"На канале {channel} только помехи. Трассировка указала другой."
+"NOTIFY_COMM_DOOR_OPEN","{name} opened the communication center.",,,"{name} открывает центр связи."
+"NOTIFY_COMM_ENCOUNTER","It heard the call. Leave the communication center.",,,"Оно услышало вызов. Уходите из центра связи."
+"NOTIFY_CONSOLE_DEAD","The console is dead. The station has no power.",,,"Консоль мертва. На станции нет питания."
+"NOTIFY_COPY_SEEN","IT HAS SEEN YOU.",,,"ОНО ВАС УВИДЕЛО."
+"NOTIFY_DISTRESS_ALREADY","The call has been sent. Whatever answered is still on the channel.",,,"Вызов отправлен. То, что на него ответило, всё ещё на канале."
+"NOTIFY_ELEVATOR_DEAD","Nothing. The cable above the car hangs slack. This elevator is not coming back.",,,"Ничего. Трос над кабиной провис. Этот лифт уже не вернётся."
+"NOTIFY_EVAC_ALREADY","The evacuation is already authorised. Get to the lift.",,,"Эвакуация уже разрешена. Идите к лифту."
+"NOTIFY_EVAC_AUTHORISED","Evacuation authorised. The freight lift is unlocked. Run.",,,"Эвакуация разрешена. Грузовой лифт разблокирован. Бегите."
+"NOTIFY_FANS_ALREADY","The fans are already running.",,,"Вентиляторы уже работают."
+"NOTIFY_FANS_DEAD","The fans have no power.",,,"На вентиляторах нет питания."
+"NOTIFY_FANS_LOCKED","Plant control is locked out. Nothing has requested it yet.",,,"Управление установкой заблокировано. Её пока ничто не запрашивало."
+"NOTIFY_FANS_RUNNING","The ventilation plant is running. The whole wing can hear it.",,,"Вентиляционная установка работает. Её слышно во всём крыле."
+"NOTIFY_FEEDER_DEAD","The feeder is dead. Restore emergency power first.",,,"Фидер обесточен. Сначала восстановите аварийное питание."
+"NOTIFY_FEEDER_NO_FUSE","The feeder closes onto a dead bus and drops out. The relay has no fuse.",,,"Фидер замыкается на мёртвую шину и отпадает. В реле нет предохранителя."
+"NOTIFY_FEEDER_OVERLOAD","Overload! The feeder trips back open. The relay takes {target} kW and no more.",,,"Перегрузка! Фидер выбивает. Реле берёт {target} кВт и ни киловаттом больше."
+"NOTIFY_FLASHLIGHT_DEAD","The flashlight is dead. It needs a battery.",,,"Фонарик не работает. Нужен аккумулятор."
+"NOTIFY_FLASHLIGHT_DEPLETED","Flashlight battery depleted.",,,"Батарея фонарика разряжена."
+"NOTIFY_FREIGHT_CIRCUIT","Generator at full load. The freight wing has power - bulkheads are opening.",,,"Генератор на полной нагрузке. В грузовом крыле есть питание — гермодвери открываются."
+"NOTIFY_FUSE_FITTED","Fuse fitted. The relay needs exactly {target} kW: close the right feeders.",,,"Предохранитель установлен. Реле нужно ровно {target} кВт: замкните нужные фидеры."
+"NOTIFY_FUSE_MISSING","The relay bus fuse is gone. Someone pulled it on purpose.",,,"Предохранителя на шине реле нет. Его вынули намеренно."
+"NOTIFY_GENERATOR_ALREADY_FULL","Generator 2 is at full load.",,,"Генератор 2 работает на полной нагрузке."
+"NOTIFY_GENERATOR_DEAD","The panel is dark. There is no power to start anything.",,,"Панель тёмная. Запускать что-либо нечем: питания нет."
+"NOTIFY_GENERATOR_INTERLOCK","Full load refused: ventilation interlock open. Start the fans in the ventilation plant.",,,"Отказ в полной нагрузке: разомкнута блокировка вентиляции. Запустите вентиляторы на вентиляционной установке."
+"NOTIFY_GENERATOR_STANDBY","Generator 2 is on standby. Nothing is asking it for more.",,,"Генератор 2 в режиме ожидания. Большего от него никто не требует."
+"NOTIFY_GENERATOR_WAKES","Deep in the power wing, a generator is trying to start.",,,"Где-то в глубине энергоблока пытается запуститься генератор."
+"NOTIFY_ITEM_TAKEN","{name} picked up: {item}.",,,"{name} забирает предмет: {item}."
+"NOTIFY_KEYPAD_ALREADY_OPEN","The lock is already open.",,,"Замок уже открыт."
+"NOTIFY_KEYPAD_DEAD","The keypad is dark. The lock has no power.",,,"Панель тёмная. На замке нет питания."
+"NOTIFY_KEYPAD_WRONG","Wrong code. The buzzer carries a long way.",,,"Неверный код. Зуммер слышно далеко."
+"NOTIFY_LAB_BLACKOUT","The laboratory lights die. Something is coming to the console. Get out.",,,"В лаборатории гаснет свет. К консоли что-то идёт. Уходите."
+"NOTIFY_LEVER_NOT_READY","The lever will not move yet: {engaged} of {total} breakers engaged. The order is on the maintenance memo in the Security Booth.",,,"Рубильник пока не поддаётся. Включено автоматов: {engaged} из {total}. Порядок указан в памятке техслужбы на посту охраны."
+"NOTIFY_LIFT_DEPARTS","The lift doors close.",,,"Двери лифта закрываются."
+"NOTIFY_LIFT_LOCKED","The lift is locked down. It needs an evacuation order from the observation chamber.",,,"Лифт заблокирован. Нужен приказ об эвакуации из камеры наблюдения."
+"NOTIFY_LIFT_WAITING","Lift called: {inside}/{total} aboard. It leaves in {seconds} seconds.",,,"Лифт вызван. На борту: {inside}/{total}. Секунд до отправления: {seconds}."
+"NOTIFY_LIFT_WAITING_SHORT","Waiting for the others: {inside}/{total} aboard.",,,"Ждём остальных. На борту: {inside}/{total}."
+"NOTIFY_MAST_ALREADY","The mast is already raised.",,,"Мачта уже поднята."
+"NOTIFY_MAST_RAISED","The antenna mast is rising. It is not quiet.",,,"Антенная мачта поднимается. Тихим это не назовёшь."
+"NOTIFY_PLAYER_TAKEN","{name} was taken.",,,"Оно забрало игрока {name}."
+"NOTIFY_POWER_ALREADY_ON","Emergency power is already on.",,,"Аварийное питание уже включено."
+"NOTIFY_POWER_RESTORED","Emergency power restored.",,,"Аварийное питание восстановлено."
+"NOTIFY_POWER_STARTING","Emergency power starting...",,,"Запуск аварийного питания..."
+"NOTIFY_RECEIVER_AWAKE","A receiver has come back to life in the Monitor Room.",,,"В мониторной ожил приёмник."
+"NOTIFY_RELAY_ALREADY_ONLINE","The communications relay is already online.",,,"Реле связи уже в работе."
+"NOTIFY_RELAY_LOAD","Relay load {load} of {target} kW. It closes only on an exact match.",,,"Нагрузка реле: {load} из {target} кВт. Оно сработает только при точном совпадении."
+"NOTIFY_RELAY_ONLINE","Communications relay online. Somewhere, sealed bulkheads are opening.",,,"Реле связи в работе. Где-то открываются задраенные гермодвери."
+"NOTIFY_SERVERS_ALREADY","The servers are already running.",,,"Серверы уже работают."
+"NOTIFY_SERVERS_ONLINE","Recording servers online.",,,"Серверы записи в работе."
+"NOTIFY_SWITCHGEAR_DEAD","The relay cabinet is dead. Restore emergency power first.",,,"Шкаф реле обесточен. Сначала восстановите аварийное питание."
+"NOTIFY_TRACE_DONE","Trace complete: the source is beneath the station. Carrier on channel {channel}.",,,"Трассировка завершена: источник находится под станцией. Несущая — на канале {channel}."
+"NOTIFY_TRACE_NO_REFERENCE","The console has nothing to trace. Listen to the receiver in the Monitor Room first.",,,"Консоли нечего отслеживать. Сначала прослушайте приёмник в мониторной."
+"NOTIFY_TRACE_NO_TAPE","The console wants a reference recording: tape 9-114, laboratory archive.",,,"Консоль требует эталонную запись: плёнка 9-114, архив лаборатории."
+"NOTIFY_TRANSMITTER_NOT_READY","Transmitter not ready ({done}/{total}): servers, mast and carrier channel must all be up.",,,"Передатчик не готов ({done}/{total}): нужны серверы, мачта и канал несущей — всё сразу."
+"NOTIFY_TRANSMITTER_READY","Transmitter ready. Use the central computer.",,,"Передатчик готов. Воспользуйтесь центральным компьютером."
+"OBJECTIVE_ACTIVATE_EVACUATION","Authorise the evacuation.",,,"Разрешите эвакуацию."
+"OBJECTIVE_ACTIVATE_EVACUATION_HINT","The console is in the observation chamber. Everything in the station will hear it.",,,"Пульт стоит в камере наблюдения. Это услышит всё, что есть на станции."
+"OBJECTIVE_ENTER_COMM_CENTER","Open the communication center.",,,"Откройте центр связи."
+"OBJECTIVE_ENTER_COMM_CENTER_HINT","The keypad is in the antechamber at the end of the south corridor.",,,"Кодовая панель — в тамбуре, в конце южного коридора."
+"OBJECTIVE_ENTER_STATION","Leave the elevator and enter STATION-09.",,,"Выйдите из лифта и войдите на STATION-09."
+"OBJECTIVE_ENTER_STATION_HINT","F switches your flashlight. Hold Shift to run - running is loud.",,,"F — включить или выключить фонарик. Удерживайте Shift, чтобы бежать: бег хорошо слышно."
+"OBJECTIVE_ESCAPE","Reach the freight lift. Do not stop.",,,"Доберитесь до грузового лифта. Не останавливайтесь."
+"OBJECTIVE_ESCAPE_COMM_CENTER","Get out of the communication center.",,,"Выберитесь из центра связи."
+"OBJECTIVE_ESCAPE_COMM_CENTER_HINT","It heard the call. Do not run unless it has already seen you.",,,"Оно услышало вызов. Не бегите, пока оно вас не увидело."
+"OBJECTIVE_ESCAPE_HINT","North end of the cargo corridor. The lift leaves when everyone is aboard.",,,"Северный конец грузового коридора. Лифт уйдёт, когда все будут на борту."
+"OBJECTIVE_ESCAPE_LABORATORY","Get out of the laboratory.",,,"Выберитесь из лаборатории."
+"OBJECTIVE_ESCAPE_LABORATORY_HINT","The lights are out. Break its line of sight and get back to the north corridor.",,,"Свет погас. Скройтесь из его поля зрения и возвращайтесь в северный коридор."
+"OBJECTIVE_FIND_COMM_CODE","Find the code for the communication center door.",,,"Найдите код от двери центра связи."
+"OBJECTIVE_FIND_COMM_CODE_HINT","The radio operator kept half of it in his office. He gave the other half to the station physician.",,,"Половину кода радист хранил у себя в кабинете. Вторую он отдал врачу станции."
+"OBJECTIVE_FIND_POWER_CONTROLS","Find the emergency power controls.",,,"Найдите управление аварийным питанием."
+"OBJECTIVE_FIND_POWER_CONTROLS_HINT","The Power Room is on the south side of the main corridor, past the checkpoint.",,,"Силовая — на южной стороне главного коридора, за КПП."
+"OBJECTIVE_FIND_RELAY_FUSE","Find the relay fuse that was taken out.",,,"Найдите вынутый предохранитель реле."
+"OBJECTIVE_FIND_RELAY_FUSE_HINT","Maintenance kept a report. The maintenance shop is on the main corridor.",,,"Техслужба оставила отчёт. Мастерская выходит в главный коридор."
+"OBJECTIVE_FIND_SIGNAL_TAPE","Find tape 9-114, the reference recording of the signal.",,,"Найдите плёнку 9-114 — эталонную запись сигнала."
+"OBJECTIVE_FIND_SIGNAL_TAPE_HINT","Laboratory archive: north corridor, through the airlock, off the main laboratory.",,,"Архив лаборатории: северный коридор, через шлюз, вход из главной лаборатории."
+"OBJECTIVE_INSPECT_GENERATOR","Something has started up in the power wing. Check the main generator.",,,"В энергоблоке что-то запустилось. Проверьте главный генератор."
+"OBJECTIVE_INSPECT_GENERATOR_HINT","Generator Hall: through the back door of the Power Room, along the service corridor.",,,"Генераторный зал: через заднюю дверь силовой и дальше по служебному коридору."
+"OBJECTIVE_INSPECT_SWITCHGEAR","Find out why the communications relay has no power.",,,"Выясните, почему на реле связи нет питания."
+"OBJECTIVE_INSPECT_SWITCHGEAR_HINT","The relay cabinet is in Electrical Control, off the service corridor.",,,"Шкаф реле стоит в электрощитовой, вход из служебного коридора."
+"OBJECTIVE_INVESTIGATE_RADIO","A receiver has woken up. Listen to the transmission.",,,"Один из приёмников ожил. Прослушайте передачу."
+"OBJECTIVE_INVESTIGATE_RADIO_HINT","The receiver is in the Monitor Room, north side of the main corridor.",,,"Приёмник стоит в мониторной, на северной стороне главного коридора."
+"OBJECTIVE_REACH_OBSERVATION","Find the evacuation override.",,,"Найдите пульт эвакуации."
+"OBJECTIVE_REACH_OBSERVATION_HINT","Generator Hall, pipe tunnel, cargo corridor. The override is in the observation chamber past the checkpoint.",,,"Генераторный зал, трубный тоннель, грузовой коридор. Пульт — в камере наблюдения за КПП."
+"OBJECTIVE_READ_INCIDENT_LOG","Find out what happened here: read the incident log.",,,"Выясните, что здесь произошло: прочтите журнал происшествий."
+"OBJECTIVE_READ_INCIDENT_LOG_HINT","The log is on the reception desk in the lobby.",,,"Журнал лежит на стойке в вестибюле."
+"OBJECTIVE_RESTORE_FREIGHT_CIRCUIT","Power the freight wing: it is the only way out.",,,"Подайте питание в грузовое крыло: другого выхода нет."
+"OBJECTIVE_RESTORE_FREIGHT_CIRCUIT_HINT","Start the fans in the ventilation plant, then switch the main generator to full load.",,,"Запустите вентиляторы на вентиляционной установке, затем переведите главный генератор на полную нагрузку."
+"OBJECTIVE_RESTORE_POWER","Restore emergency power.",,,"Восстановите аварийное питание."
+"OBJECTIVE_RESTORE_POWER_HINT","Engage the three breakers in the order on the maintenance memo (Security Booth), then throw the main lever in the Power Room.",,,"Включите три автомата в порядке, указанном в памятке техслужбы (пост охраны), затем переведите главный рубильник в силовой."
+"OBJECTIVE_RESTORE_TRANSMITTER","Bring the transmitter back to life.",,,"Верните передатчик к жизни."
+"OBJECTIVE_RESTORE_TRANSMITTER_HINT","Restart the servers, raise the mast, and lock the radio desk onto the channel the trace found.",,,"Перезапустите серверы, поднимите мачту и настройте радиопульт на канал, который показала трассировка."
+"OBJECTIVE_ROUTE_RELAY_POWER","Fit the fuse and bring the communications relay online.",,,"Установите предохранитель и запустите реле связи."
+"OBJECTIVE_ROUTE_RELAY_POWER_HINT","Close feeders until the load equals the relay's demand exactly. Too much trips the feeder - loudly.",,,"Замыкайте фидеры, пока нагрузка не сравняется с потреблением реле — точно. При перегрузке фидер выбивает, и очень громко."
+"OBJECTIVE_SEND_DISTRESS","Send the distress call.",,,"Отправьте сигнал бедствия."
+"OBJECTIVE_SEND_DISTRESS_HINT","Use the central computer in the communication center.",,,"Воспользуйтесь центральным компьютером в центре связи."
+"OBJECTIVE_TRACE_SIGNAL","Trace the source of the signal.",,,"Отследите источник сигнала."
+"OBJECTIVE_TRACE_SIGNAL_HINT","Play the tape on the console in Signal Analysis, behind the Signal Chamber.",,,"Поставьте плёнку на консоль в отделе анализа сигнала, за камерой сигнала."
+"OBJECT_ANALYSIS_CONSOLE","Signal analysis console",,,"Консоль анализа сигнала"
+"OBJECT_ARCHIVE_KEYPAD","Archive keypad",,,"Кодовая панель архива"
+"OBJECT_BATTERY_PACK","Battery pack",,,"Аккумулятор"
+"OBJECT_BREAK_ROOM_NOTE","Note on the table",,,"Записка на столе"
+"OBJECT_CENTRAL_COMPUTER","Central computer",,,"Центральный компьютер"
+"OBJECT_COMM_KEYPAD","Door keypad",,,"Кодовая панель двери"
+"OBJECT_CONTAINMENT_REPORT","Containment report",,,"Отчёт изолятора"
+"OBJECT_DIRECTOR_MEMO","Director's memo",,,"Записка директора"
+"OBJECT_ELEVATOR_CONTROL","Elevator control",,,"Пульт лифта"
+"OBJECT_EMERGENCY_POWER","Emergency power",,,"Аварийное питание"
+"OBJECT_EVACUATION_NOTICE","Evacuation notice",,,"Порядок эвакуации"
+"OBJECT_EVAC_CONSOLE","Evacuation override",,,"Пульт эвакуации"
+"OBJECT_EXAMINATION_LOG","Examination log",,,"Журнал осмотров"
+"OBJECT_FAN_CONTROL","Ventilation control",,,"Управление вентиляцией"
+"OBJECT_FEEDER_1","Feeder 1",,,"Фидер 1"
+"OBJECT_FEEDER_2","Feeder 2",,,"Фидер 2"
+"OBJECT_FEEDER_3","Feeder 3",,,"Фидер 3"
+"OBJECT_FEEDER_4","Feeder 4",,,"Фидер 4"
+"OBJECT_FREIGHT_PANEL","Freight lift control",,,"Пульт грузового лифта"
+"OBJECT_GENERATOR_PANEL","Generator status panel",,,"Панель состояния генератора"
+"OBJECT_INCIDENT_LOG","Incident log",,,"Журнал происшествий"
+"OBJECT_MAINTENANCE_MEMO","Maintenance memo",,,"Памятка техслужбы"
+"OBJECT_MAINTENANCE_REPORT","Maintenance report",,,"Отчёт техслужбы"
+"OBJECT_MAST_CONTROL","Mast control",,,"Управление мачтой"
+"OBJECT_OPERATOR_NOTE","Operator's note",,,"Записка радиста"
+"OBJECT_PATIENT_CHART","Patient chart",,,"Карта пациента"
+"OBJECT_PERSONNEL_FILE","Personnel file",,,"Список персонала"
+"OBJECT_QUARANTINE_ORDER","Quarantine order",,,"Приказ о карантине"
+"OBJECT_RADIO_DESK","Radio desk",,,"Радиопульт"
+"OBJECT_RADIO_RECEIVER","Radio receiver",,,"Радиоприёмник"
+"OBJECT_RELAY_FUSE","Relay fuse",,,"Предохранитель реле"
+"OBJECT_RESEARCH_NOTE","Research note",,,"Исследовательская заметка"
+"OBJECT_RESTRICTED_FILE","Restricted file",,,"Закрытое дело"
+"OBJECT_SEALED_DOOR","Sealed bulkhead",,,"Задраенная гермодверь"
+"OBJECT_SERVER_LOG","Server log printout",,,"Распечатка журнала сервера"
+"OBJECT_SERVER_RACK","Recording servers",,,"Серверы записи"
+"OBJECT_SHIFT_HANDOVER","Shift handover",,,"Передача смены"
+"OBJECT_SIGNAL_TAPE","Tape 9-114",,,"Плёнка 9-114"
+"OBJECT_SOURCE_LOG","Observation log",,,"Журнал наблюдений"
+"OBJECT_SWITCHGEAR","Relay cabinet",,,"Шкаф реле"
+"OBJECT_TAPE_TRANSCRIPT","Tape transcript",,,"Расшифровка плёнки"
+"OBJECT_TUNER","Channel selector",,,"Переключатель каналов"
+"OPTIONAL_READ_DOCUMENTS","Read the station's documents",,,"Прочтите документы станции"
+"OPTIONAL_RESTRICTED_ARCHIVE","Open the restricted archive",,,"Откройте закрытый архив"
+"PA_EVACUATION_1","EVACUATION AUTHORISED. FREIGHT LIFT ARMED.",,,"ЭВАКУАЦИЯ РАЗРЕШЕНА. ГРУЗОВОЙ ЛИФТ ГОТОВ К ОТПРАВЛЕНИЮ."
+"PA_EVACUATION_2","ALL PERSONNEL PROCEED TO THE FREIGHT LIFT. DO NOT LISTEN TO THE INTERCOM.",,,"ВСЕМУ ПЕРСОНАЛУ ПРОЙТИ К ГРУЗОВОМУ ЛИФТУ. НЕ СЛУШАЙТЕ ИНТЕРКОМ."
+"PA_EVACUATION_3","do not listen to the intercom. do not listen. listen.",,,"не слушайте интерком. не слушайте. слушайте."
+"PROGRESS_ABOARD","Aboard the lift: {inside}/{total}",,,"В лифте: {inside}/{total}"
+"PROGRESS_CODE","Halves of the code found: {done}/{total}",,,"Найдено половин кода: {done}/{total}"
+"PROGRESS_FREIGHT","Freight circuit: {done}/{total}",,,"Грузовой контур: {done}/{total}"
+"PROGRESS_RELAY_LOAD","Relay load: {load} / {target} kW",,,"Нагрузка реле: {load} / {target} кВт"
+"PROGRESS_TRANSMITTER","Transmitter systems: {done}/{total}",,,"Системы передатчика: {done}/{total}"
+"RADIO_FINAL_1","Recovery, this is the team from Station Nine. We are in the lift. We made it out.",,,"Спасатели, говорит группа со Станции девять. Мы в лифте. Мы выбрались."
+"RADIO_FINAL_2","[the signal climbs after the lift - layered static, something like voices, all of them yours]",,,"[сигнал поднимается вслед за лифтом — слои помех, что-то похожее на голоса, и все они ваши]"
+"RADIO_FINAL_3","[it rises into a scream no throat could make]",,,"[он нарастает до крика, на какой не способно ни одно горло]"
+"RADIO_FINAL_4","[and stops.]",,,"[и обрывается.]"
+"RADIO_FINAL_5","Recovery, this is the team from Station Nine. We made it out.",,,"Спасатели, говорит группа со Станции девять. Мы выбрались."
+"RADIO_FINAL_6","None of you has pressed the transmit key.",,,"Никто из вас не нажимал кнопку передачи."
+"RADIO_FIRST_1","Station Nine... can anyone hear me?",,,"Станция девять... меня кто-нибудь слышит?"
+"RADIO_FIRST_2","Do not trust the voices.",,,"Не верьте голосам."
+"RADIO_FIRST_3","IT KNOWS WE ARE LISTENING.",,,"ОНО ЗНАЕТ, ЧТО МЫ СЛУШАЕМ."
+"RADIO_FIRST_4","[the voice repeats, further away each time. It was recorded.]",,,"[голос повторяет это снова и снова, с каждым разом всё дальше. Это запись.]"
+"RADIO_REPLY_1","Station Nine, we hear you. Stay where you are.",,,"Станция девять, мы вас слышим. Оставайтесь на месте."
+"RADIO_REPLY_2","We are coming down to you.",,,"Мы спускаемся к вам."
+"RADIO_REPLY_3","We are coming up to you.",,,"Мы поднимаемся к вам."
+"RADIO_STATIC","[static]",,,"[помехи]"
+"SPEAKER_CONSOLE","CONSOLE",,,"КОНСОЛЬ"
+"SPEAKER_PA","STATION PA",,,"ГРОМКАЯ СВЯЗЬ"
+"SPEAKER_RADIO","RADIO",,,"РАДИО"
+"SPEAKER_SURFACE","SURFACE",,,"ПОВЕРХНОСТЬ"
+"SPEAKER_UNKNOWN","UNKNOWN VOICE",,,"НЕИЗВЕСТНЫЙ ГОЛОС"
+"UI_ALL_COMPLETE","All objectives complete.",,,"Все задачи выполнены."
+"UI_CHAPTER","CHAPTER {number}",,,"ГЛАВА {number}"
+"UI_CLOSE","CLOSE  [X]",,,"ЗАКРЫТЬ  [X]"
+"UI_ENDING_BODY","You reached the surface.
+The recovery team reports a signal on every channel. It is using your voices.
+
+It no longer needs the station.",,,"Вы добрались до поверхности.
+Спасательная группа сообщает: сигнал идёт на всех каналах. Он говорит вашими голосами.
+
+Станция ему больше не нужна."
+"UI_ENDING_TIME","Time inside: {minutes}:{seconds}",,,"Время внутри: {minutes}:{seconds}"
+"UI_ENDING_TITLE","SIGNAL LOST",,,"СИГНАЛ ПОТЕРЯН"
+"UI_ENDING_VERSION","THE LAST SIGNAL  v{version}",,,"THE LAST SIGNAL  v{version}"
+"UI_FLASHLIGHT","FLASHLIGHT",,,"ФОНАРИК"
+"UI_FLASHLIGHT_STATUS","FLASHLIGHT  {state}  {percent}%",,,"ФОНАРИК  {state}  {percent}%"
+"UI_INTRO_BODY","17 October 1998. All contact with the station is lost.
+The last transmission: ""IT KNOWS WE ARE LISTENING.""
+
+Years later, a new signal. You have been sent down to find out why.",,,"17 октября 1998 года. Связь со станцией полностью потеряна.
+Последняя передача: «ОНО ЗНАЕТ, ЧТО МЫ СЛУШАЕМ.»
+
+Спустя годы — новый сигнал. Вас отправили вниз выяснить, откуда он."
+"UI_INTRO_TITLE","STATION-09",,,"STATION-09"
+"UI_KEEP_EXPLORING","KEEP EXPLORING",,,"ПРОДОЛЖИТЬ ОСМОТР"
+"UI_KEYPAD_CLEAR","CLEAR",,,"СБРОС"
+"UI_KEYPAD_ENTER","ENTER",,,"ВВОД"
+"UI_KEYPAD_HINT","Enter the {digits}-digit code",,,"Введите код. Цифр: {digits}"
+"UI_KEYPAD_TITLE","ACCESS CODE",,,"КОД ДОСТУПА"
+"UI_LANGUAGE","LANGUAGE: {name}",,,"ЯЗЫК: {name}"
+"UI_LANGUAGE_AUTO","LANGUAGE: AUTO ({name})",,,"ЯЗЫК: АВТО ({name})"
+"UI_LOADING_BODY","The elevator is going down...",,,"Лифт идёт вниз..."
+"UI_LOADING_TITLE","THE LAST SIGNAL",,,"THE LAST SIGNAL"
+"UI_OBJECTIVE","OBJECTIVE",,,"ЗАДАЧА"
+"UI_OBJECTIVE_COMPLETE","OBJECTIVE COMPLETE",,,"ЗАДАЧА ВЫПОЛНЕНА"
+"UI_OFF","OFF",,,"ВЫКЛ"
+"UI_ON","ON",,,"ВКЛ"
+"UI_OPTIONAL","OPTIONAL",,,"ПО ЖЕЛАНИЮ"
+"UI_OPTIONAL_PROGRESS","{title}  {done}/{total}",,,"{title}  {done}/{total}"
+"UI_POWER_BREAKERS","EMERGENCY POWER   OFFLINE   BREAKERS {engaged}/{total}",,,"АВАРИЙНОЕ ПИТАНИЕ   ОТКЛЮЧЕНО   АВТОМАТЫ {engaged}/{total}"
+"UI_POWER_OFFLINE","EMERGENCY POWER   OFFLINE",,,"АВАРИЙНОЕ ПИТАНИЕ   ОТКЛЮЧЕНО"
+"UI_POWER_ONLINE","EMERGENCY POWER   ONLINE",,,"АВАРИЙНОЕ ПИТАНИЕ   ВКЛЮЧЕНО"
+"UI_STAMINA","STAMINA",,,"ВЫНОСЛИВОСТЬ"
+"UI_TOUCH_LIGHT","LIGHT",,,"СВЕТ"
+"UI_TOUCH_RUN","RUN",,,"БЕГ"

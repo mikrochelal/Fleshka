@@ -1,16 +1,20 @@
 --!strict
 -- Text the server wants the player to read right now: short notifications at the top of
--- the screen and subtitles at the bottom.
+-- the screen and subtitles at the bottom. The server sends text references; they are
+-- rendered here in the player's language.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme"))
+local LocalizationController = require(script.Parent:WaitForChild("LocalizationController"))
 
-local NOTIFICATION_SECONDS = 4.5
+local NOTIFICATION_SECONDS = 5.5
+-- Long lines (Russian runs longer than English) wrap instead of leaving the screen.
+local NOTIFICATION_MAX_WIDTH = 620
 local MAX_NOTIFICATIONS = 3
-local MAX_TEXT_LENGTH = 300
+local MAX_TEXT_LENGTH = 600
 
 local MessageController = {}
 
@@ -47,25 +51,27 @@ local function showNotification(text: string, kind: string)
 	end
 
 	local row: Frame = Theme.make("Frame", {
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
 		BackgroundColor3 = Theme.Color.Panel,
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		LayoutOrder = notificationOrder,
 	}, notificationList)
-	Theme.padding(row, 16, 0)
+	Theme.padding(row, 16, 9)
 	local stroke = Theme.border(row, if warning then Theme.Color.Warning else Theme.Color.Accent, 1)
 	local label: TextLabel = Theme.make("TextLabel", {
-		Size = UDim2.fromOffset(0, 34),
-		AutomaticSize = Enum.AutomaticSize.X,
+		Size = UDim2.fromOffset(0, 0),
+		AutomaticSize = Enum.AutomaticSize.XY,
 		BackgroundTransparency = 1,
 		Font = Theme.Font.Medium,
 		TextSize = 15,
 		TextColor3 = if warning then Theme.Color.Warning else Theme.Color.Text,
 		TextTransparency = 1,
+		TextWrapped = true,
 		Text = text,
 	}, row)
+	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(NOTIFICATION_MAX_WIDTH, 200) }, label)
 
 	Theme.tween(row, 0.25, { BackgroundTransparency = 0.3 })
 	Theme.tween(stroke, 0.25, { Transparency = 0.45 })
@@ -156,13 +162,14 @@ function MessageController.Start(_self: any)
 	build()
 
 	Net.waitForServerEvent("Notify").OnClientEvent:Connect(function(text: any, kind: any)
-		showNotification(clean(text), clean(kind))
+		showNotification(LocalizationController.render(clean(text)), clean(kind))
 	end)
 	Net.waitForServerEvent("Subtitle").OnClientEvent
 		:Connect(function(speaker: any, text: any, seconds: any)
+			local speakerRef = clean(speaker)
 			showSubtitle(
-				clean(speaker),
-				clean(text),
+				if speakerRef == "" then "" else LocalizationController.render(speakerRef),
+				LocalizationController.render(clean(text)),
 				if type(seconds) == "number" then seconds else 3
 			)
 		end)
