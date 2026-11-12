@@ -25,6 +25,8 @@ local FLICKER_SECONDS = 2.4
 local END_INSET = 6
 local DISTURBANCE_SECONDS = 0.9
 local DISTURBANCE_CHECK = 4
+local SIGHTING_RETRY_SECONDS = 8
+local SIGHTING_MAX_ATTEMPTS = 12
 
 local log = Logger.new("Horror")
 
@@ -32,6 +34,9 @@ local HorrorDirector = {}
 
 local sightingArmed = false
 local sightingPlayed = false
+-- True while one attempt at the sighting is running.
+local sightingBusy = false
+local sightingAttempts = 0
 local random = Random.new()
 
 -- The end of the room's long axis that is farthest from every player.
@@ -57,24 +62,41 @@ local function farEnd(zone: BasePart): Vector3
 end
 
 local function playSighting()
-	if sightingPlayed or not SessionService.isPlaying() then
+	if sightingPlayed or sightingBusy or not sightingArmed or not SessionService.isPlaying() then
 		return
 	end
-	sightingPlayed = true
-	sightingArmed = false
-
 	local room = CopyConfig.SightingRoom
 	local zone = WorldService.getZone(room)
 	if not zone then
+		sightingPlayed = true
 		log:warn(`Room "{room}" not found; the corridor sighting was skipped`)
 		return
 	end
-	log:info("Corridor sighting")
 
+	sightingBusy = true
+	sightingAttempts += 1
+	log:info(`Corridor sighting (attempt {sightingAttempts})`)
 	FacilityLights.flickerRooms({ room }, FLICKER_SECONDS)
 	NetService.fireAll("Effect", "Interference", FLICKER_SECONDS)
 	task.wait(FLICKER_SECONDS * 0.5)
-	CopyAI.stageSighting(farEnd(zone), CopyConfig.SightingDuration, CopyConfig.SightingFleeDistance)
+
+	local appeared = SessionService.isPlaying()
+		and CopyAI.stageSighting(
+			farEnd(zone),
+			CopyConfig.SightingDuration,
+			CopyConfig.SightingFleeDistance
+		)
+	sightingBusy = false
+	if appeared then
+		sightingPlayed = true
+		sightingArmed = false
+	elseif sightingAttempts < SIGHTING_MAX_ATTEMPTS then
+		-- It was already out on another encounter: stay armed and try again shortly.
+		task.delay(SIGHTING_RETRY_SECONDS, playSighting)
+	else
+		sightingPlayed = true
+		log:warn("Corridor sighting abandoned: THE COPY was busy every time")
+	end
 end
 
 -- Makes the corridor sighting ready: it plays when a player is next in the corridor, or
