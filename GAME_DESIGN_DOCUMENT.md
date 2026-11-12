@@ -268,55 +268,70 @@ The diagram and the full folder structure are in `docs/MAP_GENERATOR.md`.
 | G. Power         | ServiceCorridor, GeneratorHall, ElectricalControl, Ventilation, PipeTunnel |
 | H. Containment   | CargoCorridor, FreightElevator, Checkpoint, ObservationChamber, SignalSource |
 
-## 12. Playable slice (version 0.3.0)
+## 12. The game as built (version 0.4.0)
 
-What is actually built, as opposed to the full design above.
+What is actually implemented, as opposed to the full design above.
 
-**Flow (5–10 minutes):** elevator → lobby → find the memo in the Security Booth → engage
-three breakers in the memo's order and throw the lever in the Power Room → the radio in
-the Monitor Room starts receiving → listen to the transmission → a silhouette at the end
-of the main corridor → communication center console recalls the elevator → return to the
-elevator while THE COPY may now give chase → ending line and completion card.
+**Flow:** elevator → lobby → memo in the Security Booth → three breakers in the memo's
+order → main lever in the Power Room → switchgear in Electrical Control (communications
+relay) → radio in the Monitor Room → silhouette in the main corridor → trace console in
+Signal Analysis → central computer in the communication center recalls the elevator →
+back to the elevator under pursuit → the signal follows.
 
-| Objective | Completed when |
-| --------- | -------------- |
-| Investigate the elevator and enter STATION-09 | A player leaves the elevator room |
-| Find the emergency power controls | A player reaches the Power Room or operates a breaker |
-| Restore the facility power | The power puzzle is solved |
-| Investigate the anomalous radio transmission | The transmission has played to the end |
-| Reach the communication center | A player uses the central computer |
-| Find a way to escape | A player uses the recalled elevator |
+| # | Objective | Completed when | THE COPY becomes |
+| - | --------- | -------------- | ---------------- |
+| 1 | Investigate the elevator and enter STATION-09 | A player leaves the elevator room | |
+| 2 | Find the emergency power controls | A player reaches the Power Room or a breaker | |
+| 3 | Restore the facility power | The lever is thrown with all breakers engaged | Aware |
+| 4 | Bring the communications relay online | The switchgear is used (needs power) | |
+| 5 | Investigate the anomalous radio transmission | The transmission has played to the end | Hunting |
+| 6 | Trace the source of the signal | The analysis console finishes the trace | Hostile |
+| 7 | Reach the communication center | The central computer recalls the elevator | FinalPursuit |
+| 8 | Find a way to escape | A player uses the recalled elevator | |
 
-Milestones are remembered even if they happen early or out of order, and objectives catch
-up in sequence, so splitting up in co-op cannot block the mission.
+Each objective has a one-line hint on the HUD. Milestones are remembered if they happen
+early or out of order, and objectives 4 and 6 are skipped on a map that lacks their rooms,
+so the mission cannot get stuck.
 
 **Power Restoration as built:** one breaker panel in each of the Security Booth, Power Room
 and Maintenance. The order is shuffled by the server every session and appears only in the
-memo's text. Engaging a breaker lights it amber and shows its position; opening one also
-drops the ones after it. The lever refuses to move until all are engaged; a wrong order
-trips everything, flickers the lit circuits and is loud enough to draw THE COPY. Success
-turns on lighting circuits B, C and D, turns off the emergency lamps and wakes the radio.
+memo. The right breaker engages and stays engaged. A breaker out of turn trips straight
+back out, flashes, and makes a noise loud enough to draw THE COPY — but nothing already
+done is undone. The lever refuses until all are engaged, then always works: a surge, then
+lighting circuits B–H come on and the emergency lamps go out.
 
 **Player values:** walk 12, sprint 20 studs/s; stamina lasts about 7 s, returns after
 1.2 s, and locks at zero until 25%. Flashlight battery lasts about 5 minutes, flickers
-under 15%, recovers slowly to 25% while off; battery packs refill it.
+under 15%, recovers slowly to 25% while off; battery packs refill it. First-person camera
+with a small step bob; the local beam follows the camera.
 
-**THE COPY as built** (`Config/CopyConfig`): walks at 9, pursues at 15 (between the
-player's walk and sprint). Sees 38 studs in the dark, 60 when the player's flashlight is
-on. Needs 1 s of continuous sight before reacting. Before the console is used it never
-chases: it stops, stares, and vanishes when approached or after 9 s. After the console it
-may pursue: a warning ("IT HAS SEEN YOU.", interference, flicker) and a 2 s pause first,
-then a chase that ends after 5 s without sight or 25 s in total. A catch needs 0.8 s
-within 4.5 studs and returns the player to the communication center. It appears only at
-map observation points at least 40 studs from every player and out of everyone's sight;
-35 s of quiet follow every encounter (60 s after a catch). While dormant only loud noises
-(a failed start-up, the elevator recall) bring it; once out, it hears sprinting too. After
-the first scripted sighting it also comes to watch about once a minute.
+**THE COPY as built** (`Config/CopyConfig`). One entity per server. It appears only at map
+observation points at least 40 studs from every player and out of everyone's sight; needs
+1 s of continuous sight before reacting; a pursuit starts with a warning and a 2 s pause,
+ends when sight is lost, and never lasts more than 25 s; a catch needs 0.8 s within 4.5
+studs and returns the player to the communication center.
+
+| Stage | Set by | Visits on its own | Chases | Pursue speed | Sight | Loses you after | Rest | Comes to noise of |
+| ----- | ------ | ----------------- | ------ | ------------ | ----- | --------------- | ---- | ----------------- |
+| Dormant | start | never | no | — | x1 | — | 35 s | a rejected breaker |
+| Aware | power restored | every ~60 s | no | — | x1 | — | 35 s | a rejected breaker |
+| Hunting | transmission heard | ~45 s | yes | 15 | x1.1 | 5 s | 28 s | + the radio |
+| Hostile | signal traced | ~32 s | yes | 16.5 | x1.25 | 6.5 s | 18 s | + sprinting |
+| FinalPursuit | elevator recalled | ~16 s | yes | 17.5 | x1.35 | 8 s | 8 s | + sprinting |
+
+Stages only move forward, one at a time. Speed is the smallest part of the change: what
+grows is how often it is present, whether it chases at all, how far it sees, how long it
+holds on and what it hears. It is never faster than a sprint and never sees through walls.
+From Aware on, the lights of a room a player is in stutter now and then while it is away.
 
 **Scripted event built (1 of 7):** the corridor silhouette, event 1 in section 8.
 
-**Not in the slice:** menu, lobby, parties, settings, the other two puzzles, working doors,
-the journal, voice imitation, audio assets, the intro cinematic and credits.
+**Ending as built:** fade to black; the signal rises (subtitles and heavy interference —
+there is no audio yet); silence; "Thank you for bringing it outside."; completion card.
+
+**Not built:** menu, lobby, parties, settings, the frequency and security-code puzzles,
+working doors, the journal, voice imitation, audio assets, environment props, the intro
+cinematic and credits.
 
 ## 13. Assets
 

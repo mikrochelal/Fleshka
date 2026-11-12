@@ -6,8 +6,9 @@ In 1998 the underground research facility STATION-09 went silent after transmitt
 sentence: *"IT KNOWS WE ARE LISTENING."* Years later a new signal appears, and a team is sent
 down to find out why.
 
-> **Status:** version 0.3.0 — a playable 5–10 minute slice (elevator → power puzzle → radio →
-> first encounter → escape). Written and statically checked; not yet verified in Roblox
+> **Status:** version 0.4.0 — a playable mission of eight objectives across the expanded
+> 55-room station, in first person, with THE COPY escalating as objectives are completed.
+> Written, statically checked and unit tested; most of it is not yet verified in Roblox
 > Studio. See [PROGRESS.md](PROGRESS.md).
 > Пошаговая инструкция на русском: [docs/SETUP_RU.md](docs/SETUP_RU.md).
 
@@ -68,8 +69,8 @@ tests/                    Unit tests for pure-logic modules (Luau CLI)
 6. Open your place in Roblox Studio → **Plugins** tab → **Rojo** → **Connect**.
 7. Press **Play**. The Output window should show:
    ```text
-   [TLS:Server] THE LAST SIGNAL v0.3.0 started: 6 services, 15 systems
-   [TLS:Client] Client started: 7 controllers
+   [TLS:Server] THE LAST SIGNAL v0.4.0 started: 6 services, 15 systems
+   [TLS:Client] Client started: 8 controllers
    ```
 
 Official Rojo documentation: <https://rojo.space/docs/v7/>.
@@ -94,6 +95,8 @@ connected, press **Play**: you are placed in the elevator and the mission starts
 | Flashlight         | F            | Y       | LIGHT          |
 | Interact           | E            | X       | tap the prompt |
 | Close a document   | X            | B       | CLOSE          |
+
+The camera is first person while the mission runs (`Config/CameraConfig`).
 
 The walkthrough and what to look for are in [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)
 (section "Playable slice").

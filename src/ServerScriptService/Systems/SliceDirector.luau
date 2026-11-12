@@ -1,14 +1,20 @@
 --!strict
--- The mission script for the current playable slice. It starts the session, turns what
--- happens in the world into objective progress, and owns the two objects that belong to
--- the mission itself (the communication console and the elevator panel).
+-- The mission script. It starts the session, turns what happens in the world into
+-- objective progress, raises THE COPY's escalation stage as objectives are completed, and
+-- owns the objects that belong to the mission itself.
 --
+--   Objective          Completed when                                  THE COPY becomes
 --   EnterStation       a player leaves the elevator room
---   FindPowerControls  a player reaches the power room or operates a breaker
---   RestorePower       the power puzzle is solved
---   InvestigateRadio   the radio transmission has been heard to the end
---   ReachCommCenter    a player uses the console in the communication center
+--   FindPowerControls  a player reaches the power room or a breaker
+--   RestorePower       the power puzzle is solved                      Aware
+--   RestoreSystems     the switchgear in Electrical Control is used    (radio wakes)
+--   InvestigateRadio   the transmission has been heard to the end      Hunting
+--   TraceSignal        the analysis console has traced the source      Hostile
+--   ReachCommCenter    the central computer recalls the elevator       FinalPursuit
 --   Escape             a player uses the recalled elevator
+--
+-- Milestones are remembered when they happen early or out of order, and an objective whose
+-- object does not exist on the current map is skipped, so the mission can never get stuck.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -35,6 +41,21 @@ local WorldProps = require(script.Parent.WorldProps)
 local POWER_ROOM = "B_PowerRoom"
 local SPAWN_TAG = "TLS_Spawn"
 local RECALL_NOISE_RADIUS = 400
+local COLOR_ONLINE = Color3.fromRGB(70, 170, 120)
+
+-- Completing an objective raises THE COPY to this stage.
+local STAGE_AFTER: { [string]: string } = {
+	RestorePower = "Aware",
+	InvestigateRadio = "Hunting",
+	TraceSignal = "Hostile",
+	ReachCommCenter = "FinalPursuit",
+}
+-- Objectives that need an object from the expanded map (layout v4). On an older map the
+-- object is missing and the objective is skipped.
+local REQUIRED_PROP: { [string]: string } = {
+	RestoreSystems = "Switchgear",
+	TraceSignal = "AnalysisConsole",
+}
 
 local log = Logger.new("Slice")
 
@@ -42,10 +63,10 @@ local SliceDirector = {}
 
 local startedAt = 0
 local finishing = false
--- Milestones that have happened, by objective id. They are remembered even when they
--- happen early or out of order (players split up, or move during the intro), and turned
--- into objective progress by reconcile().
+local tracing = false
+-- Milestones that have happened, by objective id.
 local reached: { [string]: boolean } = {}
+local skipped: { [string]: boolean } = {}
 
 local function notify(player: Player, text: string, kind: string)
 	NetService.fire("Notify", player, text, kind)
@@ -57,7 +78,7 @@ local function reconcile()
 		return
 	end
 	local current = ObjectiveService.currentId()
-	while current and reached[current] do
+	while current and (reached[current] or skipped[current]) do
 		ObjectiveService.complete(current)
 		current = ObjectiveService.currentId()
 	end
@@ -103,6 +124,64 @@ local function evaluateZones()
 	end
 end
 
+local function onObjectiveCompleted(id: string, nextId: string?)
+	log:info(`Objective state: {id} complete -> {nextId or "mission complete"}`)
+	if id == "RestoreSystems" then
+		RadioSystem.wake()
+	end
+	local stage = STAGE_AFTER[id]
+	if stage then
+		CopyAI.setStage(stage)
+	end
+end
+
+local function onSwitchgear(player: Player, target: Instance, _id: string)
+	if not SessionService.isPlaying() then
+		return
+	end
+	if not PowerSystem.isOn() then
+		notify(player, "The switchgear is dead. Restore emergency power first.", "info")
+	elseif ObjectiveService.isCompleted("RestoreSystems") then
+		notify(player, "The communications relay is already online.", "info")
+	else
+		log:info(`{player.Name} switched the communications relay on`)
+		local part = WorldProps.partOf(target)
+		if part then
+			part.Color = COLOR_ONLINE
+			WorldProps.setLabel(target, "COMMS RELAY\nONLINE", COLOR_ONLINE)
+			NetService.fireAll("Sound", "Machinery", part.Position)
+		end
+		NetService.fireAll("Notify", "Communications relay online.", "info")
+		reach("RestoreSystems")
+	end
+end
+
+local function onAnalysis(player: Player, target: Instance, _id: string)
+	if not SessionService.isPlaying() or tracing then
+		return
+	end
+	if not ObjectiveService.isCompleted("InvestigateRadio") then
+		notify(player, "The console shows only noise. There is nothing to trace yet.", "info")
+	elseif ObjectiveService.isCompleted("TraceSignal") then
+		notify(
+			player,
+			"Trace complete: the source is beneath the station. It is answering.",
+			"info"
+		)
+	else
+		tracing = true
+		log:info(`{player.Name} started the signal trace`)
+		local part = WorldProps.partOf(target)
+		local position = if part then part.Position else nil
+		RadioSystem.play(
+			Transmissions.Trace,
+			position,
+			if position then WorldService.zoneAt(position) else nil
+		)
+		reach("TraceSignal")
+	end
+end
+
 local function onConsole(player: Player, target: Instance, _id: string)
 	if not SessionService.isPlaying() then
 		return
@@ -110,18 +189,18 @@ local function onConsole(player: Player, target: Instance, _id: string)
 	if not PowerSystem.isOn() then
 		notify(player, "The console is dead. The station has no power.", "info")
 	elseif ObjectiveService.isActive("ReachCommCenter") then
-		reach("ReachCommCenter")
+		log:info(`{player.Name} recalled the elevator`)
 		NetService.fireAll(
 			"Notify",
-			"Recall signal sent. The freight elevator is on its way down.",
-			"info"
+			"Recall signal sent. The elevator is on its way down. Something heard it.",
+			"warning"
 		)
 		local panel = WorldProps.get("ElevatorPanel")
 		if panel then
 			panel:SetAttribute("InteractEnabled", true)
 		end
-		-- The recall is loud, and from here on THE COPY may give chase.
-		CopyAI.arm()
+		reach("ReachCommCenter")
+		-- The recall is loud: it comes straight away.
 		local part = WorldProps.partOf(target)
 		if part then
 			NoiseService.emit(part.Position, RECALL_NOISE_RADIUS)
@@ -135,6 +214,7 @@ end
 
 local function finish()
 	finishing = true
+	log:info("Escape sequence begins")
 	reach("Escape")
 	ReplicatedStorage:SetAttribute(GameState.DURATION_ATTRIBUTE, math.floor(os.clock() - startedAt))
 	CopyAI.shutdown()
@@ -145,7 +225,7 @@ local function finish()
 	local part = panel and WorldProps.partOf(panel)
 	RadioSystem.play(Transmissions.FinalWords, if part then part.Position else nil, nil)
 	SessionService.setPhase(GameState.Phase.Ending)
-	log:info("Slice complete")
+	log:info("Mission complete")
 end
 
 local function onElevator(player: Player, _target: Instance, _id: string)
@@ -185,9 +265,12 @@ local function autoStart()
 end
 
 function SliceDirector.Start(_self: any)
+	InteractionSystem.registerKind("Switchgear", onSwitchgear)
+	InteractionSystem.registerKind("AnalysisConsole", onAnalysis)
 	InteractionSystem.registerKind("CommConsole", onConsole)
 	InteractionSystem.registerKind("ElevatorPanel", onElevator)
 
+	ObjectiveService.completed:Connect(onObjectiveCompleted)
 	WorldService.zoneEntered:Connect(evaluateZones)
 	SessionService.phaseChanged:Connect(function(phase: GameState.Phase)
 		if phase == GameState.Phase.Playing then
@@ -210,6 +293,15 @@ function SliceDirector.Start(_self: any)
 
 	WorldService.onReady(function()
 		WorldProps.ensure()
+		for objective, prop in REQUIRED_PROP do
+			if not WorldProps.get(prop) then
+				skipped[objective] = true
+				log:warn(
+					`Objective {objective} will be skipped: this map has no "{prop}". `
+						.. "Regenerate the map to get the expanded station (docs/MAP_GENERATOR.md)."
+				)
+			end
+		end
 		if GameConfig.AutoStartSession then
 			autoStart()
 		end

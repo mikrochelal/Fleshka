@@ -15,6 +15,11 @@ GameState.OBJECTIVE_ATTRIBUTE = "TLS_Objective"
 GameState.POWER_ATTRIBUTE = "TLS_PowerOn"
 -- Seconds the session took, set when it ends.
 GameState.DURATION_ATTRIBUTE = "TLS_SessionSeconds"
+-- Power puzzle progress, for the HUD.
+GameState.BREAKERS_ENGAGED_ATTRIBUTE = "TLS_BreakersEngaged"
+GameState.BREAKERS_TOTAL_ATTRIBUTE = "TLS_BreakersTotal"
+-- THE COPY's escalation stage name (for diagnostics; clients do not act on it).
+GameState.COPY_STAGE_ATTRIBUTE = "TLS_CopyStage"
 
 -- Attributes on each Player through which the server replicates that player's state.
 GameState.PlayerAttribute = table.freeze({

@@ -3,6 +3,7 @@
 
 local Brain = require("../src/ServerScriptService/Systems/CopyAI/Brain")
 local CopyConfig = require("../src/ReplicatedStorage/Config/CopyConfig")
+local Escalation = require("../src/ServerScriptService/Systems/CopyAI/Escalation")
 
 local failures = 0
 local total = 0
@@ -280,6 +281,98 @@ check(
 	"never appears inside its own flee distance",
 	CopyConfig.MinAppearDistance > CopyConfig.ObserveFleeDistance
 )
+
+-- Escalation: forward only, one stage at a time.
+do
+	local escalation = Escalation.new()
+	local seen: { string } = {}
+	local function record(from: string, to: string)
+		table.insert(seen, `{from}>{to}`)
+	end
+	check("starts dormant", Escalation.stage(escalation) == "Dormant")
+	check("one step", Escalation.advanceTo(escalation, "Aware", record) == 1)
+	check("asking again does nothing", Escalation.advanceTo(escalation, "Aware", record) == 0)
+	check("cannot go back", Escalation.advanceTo(escalation, "Dormant", record) == 0)
+	check("unknown stage does nothing", Escalation.advanceTo(escalation, "Furious", record) == 0)
+	check(
+		"a jump walks through every stage",
+		Escalation.advanceTo(escalation, "FinalPursuit", record) == 3
+	)
+	check(
+		"every step was announced in order",
+		table.concat(seen, " ")
+			== "Dormant>Aware Aware>Hunting Hunting>Hostile Hostile>FinalPursuit"
+	)
+	check("ends at the last stage", Escalation.stage(escalation) == "FinalPursuit")
+end
+
+-- Stage settings: it gets worse step by step, but never unfair.
+do
+	local previous: any = nil
+	for _, name in Escalation.ORDER do
+		local stage = CopyConfig.Stages[name]
+		check(`stage {name} is configured`, stage ~= nil)
+		check(`{name}: slower than a sprint`, stage.PursueSpeed < PlayerSpeeds.sprint)
+		check(`{name}: faster than a walk when pursuing`, stage.PursueSpeed > PlayerSpeeds.walk)
+		check(`{name}: always leaves some quiet time`, stage.Cooldown >= 5)
+		check(
+			`{name}: cannot see through the whole station`,
+			CopyConfig.DetectionDistanceLit * stage.DetectionScale <= 90
+		)
+		if previous then
+			check(
+				`{name}: not slower than the stage before`,
+				stage.PursueSpeed >= previous.PursueSpeed
+			)
+			check(
+				`{name}: rests no longer than the stage before`,
+				stage.Cooldown <= previous.Cooldown
+			)
+			check(
+				`{name}: sees at least as far as the stage before`,
+				stage.DetectionScale >= previous.DetectionScale
+			)
+			check(
+				`{name}: hears at least as well as the stage before`,
+				stage.WakeNoiseRadius <= previous.WakeNoiseRadius
+			)
+		end
+		previous = stage
+	end
+	check("Dormant never visits on its own", CopyConfig.Stages.Dormant.VisitInterval == nil)
+	check(
+		"Dormant and Aware never chase",
+		not CopyConfig.Stages.Dormant.Pursues and not CopyConfig.Stages.Aware.Pursues
+	)
+	check(
+		"Hunting and later chase",
+		CopyConfig.Stages.Hunting.Pursues and CopyConfig.Stages.FinalPursuit.Pursues
+	)
+	check(
+		"a rejected breaker (140) wakes it even when dormant",
+		CopyConfig.Stages.Dormant.WakeNoiseRadius <= 140
+	)
+	check(
+		"sprinting (34) does not wake it before it is hostile",
+		CopyConfig.Stages.Hunting.WakeNoiseRadius > 34
+	)
+end
+
+-- Tuning the brain per stage.
+do
+	local brain = fresh()
+	Brain.tune(brain, { LoseSightTime = 8, EncounterCooldown = 8 })
+	check(
+		"tune overrides the given values",
+		brain.config.LoseSightTime == 8 and brain.config.EncounterCooldown == 8
+	)
+	check("tune keeps the others", brain.config.AcquireTime == CopyConfig.AcquireTime)
+	Brain.tune(brain, { LoseSightTime = 6 })
+	check(
+		"tune starts from the original each time",
+		brain.config.EncounterCooldown == CopyConfig.EncounterCooldown
+	)
+end
 
 print(`{total - failures}/{total} checks passed`)
 if failures > 0 then

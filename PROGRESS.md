@@ -9,7 +9,7 @@ Status vocabulary: **Implemented** (code written) · **Tested** (verified at run
 analysis and the unit tests in `tests/`. Static checks do not prove runtime behaviour in
 Roblox; that is recorded in `TESTING_CHECKLIST.md`.
 
-_Last updated: 2026-11-12 — version 0.3.0 (playable slice)_
+_Last updated: 2026-11-12 — version 0.4.0_
 
 ## Summary
 
@@ -25,6 +25,63 @@ _Last updated: 2026-11-12 — version 0.3.0 (playable slice)_
 | Door system (doors are walk-through) | Not implemented |
 | Audio assets                 | Blocked — no verified assets chosen; every cue id is empty |
 
+## Version 0.4.0 — bug fixes, first person, escalation
+
+### The two reported bugs
+
+**"EMERGENCY POWER says everything must be done again."** Found by code inspection, not
+reproduced (no Studio). The lever did exactly what it was written to do: if the three
+breakers had been engaged in any order other than the memo's, `PowerSystem.trip()` reset
+all of them and showed "Wrong start-up order. Every breaker has tripped." With three
+breakers, five of the six possible orders did this, and nothing on screen said where the
+order came from. Not a broken remote or objective reset — a punishing rule with poor
+feedback. Fixed by removing the reset: a breaker out of turn trips back out on its own and
+the rest stay engaged; the lever always works once all are in; the HUD shows the breaker
+count and a hint pointing at the memo.
+
+**"THE COPY stopped appearing."** No code path of THE COPY changed between 0.3.0 and the
+map expansion, so no regression was found in its own code. What the audit did find:
+
+- Every way it could appear was behind restored power (the scripted sighting needs the
+  radio, the radio needed power), except one: the noise of a failed start-up. With the
+  lever bug above, a session never got past the power puzzle.
+- Its body is almost black and the station is unlit before power, so even when it came to
+  a failed start-up it stood in a dark room for a second or two and left.
+- Nothing was logged when it could not find a fair place to appear, so "it is not coming"
+  and "it is broken" looked the same.
+
+Fixed by the power change, a faint glow on the body, regular visits from the moment power
+is restored, and `[TLS:THE_COPY]` logs for every request, success, refusal (with the
+reason) and stage change. **Whether this was the cause in the owner's session is not
+confirmed**; the new logs will show it on the next run.
+
+### What is new
+
+| System | Files | Status |
+| ------ | ----- | ------ |
+| Power puzzle without resets; start-up sequence; state logs | `Systems/PowerSystem` | Implemented; **Not tested** |
+| Power status and objective hints on the HUD | `Controllers/HudController`, `Config/ObjectiveConfig` | Implemented; **Not tested** |
+| Mission of eight objectives through the power wing and the laboratory; objectives skipped when the map lacks their object | `Systems/SliceDirector` | Implemented; **Not tested** |
+| Switchgear (communications relay) and signal-trace console | `Data/PropList`, `Data/Transmissions` | Implemented; placement unit tested; **Not tested** |
+| Three more documents (6 in total) in the power, medical and archive wings | `Data/Documents` | Implemented; content unit tested |
+| THE COPY escalation: Dormant → Aware → Hunting → Hostile → FinalPursuit, driven by objectives, one step at a time | `Systems/CopyAI/Escalation`, `Config/CopyConfig` | Implemented; **unit tested** (forward only, no skipped stage, per-stage fairness limits); behaviour in play **Not tested** |
+| THE COPY diagnostics and glow | `Systems/CopyAI/init`, `Body` | Implemented; **Not tested** |
+| Environmental disturbances by stage | `Systems/HorrorDirector` | Implemented; **Not tested** |
+| First-person camera with step bob; camera-aligned local flashlight | `Controllers/CameraController`, `Config/CameraConfig` | Implemented; **Not tested** — depends on engine behaviour that could not be checked here |
+| Haze, colour grade, template effects disabled, at runtime only | `Systems/AtmosphereSystem`, `Config/AtmosphereConfig` | Implemented; values are a first guess, **Not tested** |
+| Ending: rising-signal sequence before the last line | `Data/Transmissions` | Implemented as subtitles and interference; **no audio** |
+
+### Not done from the 0.4.0 brief
+
+- Environmental props (cables, pipes, panels, signs beyond door names, particles): none.
+- Audio: still no assets, so no machinery, ambience, flashlight click or final scream can
+  be heard. The cues exist and are named.
+- Working doors: still walk-through, so "the next area becomes accessible" is told by
+  objectives and light, not by a door opening.
+- The escape is a return to the arrival elevator, not a chase set-piece with a dedicated
+  route; the freight elevator is not used yet.
+- Settings (camera bob on/off, volumes) exist only as config values, not as a menu.
+
 ## Production milestones (the "ultimate" brief)
 
 | # | Milestone | State |
@@ -32,10 +89,10 @@ _Last updated: 2026-11-12 — version 0.3.0 (playable slice)_
 | 1 | Full technical audit | Done |
 | 2 | Expanded station | **Done in code**: 55 rooms, 8 zones, original 29 preserved; needs Studio verification |
 | 3 | Visual transformation | **Started**: per-zone wall materials and lamp tones, door signs. Not done: props and decoration, pipes, fog and post-processing, per-zone Lighting, graphics fallback |
-| 4 | Core gameplay | Slice exists. Not done: first-person camera, working doors |
-| 5 | Puzzles and story | Power puzzle and 3 documents exist. Not done: frequency, archive code and containment puzzles; the 12 lore discoveries; the longer objective chain through the new wings |
-| 6 | THE COPY | Six-state version exists. Not done: stalking state, field of view, new silhouette, animation |
-| 7 | Cinematic horror | One scripted sighting exists. Not done: the other scare types, camera impulses |
+| 4 | Core gameplay | Slice plus first-person camera (0.4.0). Not done: working doors |
+| 5 | Puzzles and story | Power puzzle, 8-objective mission, 6 documents. Not done: frequency, archive code and containment puzzles; the remaining lore discoveries |
+| 6 | THE COPY | Six states plus five escalation stages (0.4.0). Not done: stalking state, field of view, new silhouette, animation |
+| 7 | Cinematic horror | One scripted sighting and stage-driven disturbances. Not done: the other scare types, camera impulses |
 | 8 | Final presentation | Not done: menu, lobby, settings, pause, credits, volume groups |
 | 9 | Testing | Static only; Studio testing is the owner's |
 

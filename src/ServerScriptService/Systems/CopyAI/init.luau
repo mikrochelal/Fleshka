@@ -1,13 +1,17 @@
 --!strict
 -- THE COPY: a server-controlled entity in the world. This module connects its parts:
---   Brain      decides which state it is in (pure rules, unit tested)
---   Senses     what it can see, and where it may appear
---   Navigator  walking along the floor
---   Body       the placeholder model
+--   Brain       decides which state it is in (pure rules, unit tested)
+--   Escalation  how angry it is; set by mission progress, forward only
+--   Senses      what it can see, and where it may appear
+--   Navigator   walking along the floor
+--   Body        the placeholder model
 --
--- Other systems talk to it only through noise (NoiseService) and the few functions at the
--- bottom of this file. Clients never control it; they only see the replicated model and a
--- per-player "dread" value that drives screen interference.
+-- There is exactly one entity for the whole server: one model, created once, moved in and
+-- out of the world. Other systems talk to it only through noise (NoiseService) and the few
+-- functions at the bottom of this file. Clients never control it; they see the replicated
+-- model and a per-player "dread" value that drives screen interference.
+--
+-- Every appearance, refusal to appear and stage change is logged as [TLS:THE_COPY].
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,26 +28,30 @@ local FacilityLights = require(script.Parent.FacilityLights)
 local SpawnSystem = require(script.Parent.SpawnSystem)
 local Body = require(script.Body)
 local Brain = require(script.Brain)
+local Escalation = require(script.Escalation)
 local Navigator = require(script.Navigator)
 local Senses = require(script.Senses)
 
 local THINK_INTERVAL = 0.1
 local REPATH_INTERVAL = 0.6
 local SEARCH_RADIUS = 70
+-- A refused appearance is retried every think; say why at most this often.
+local FAILURE_LOG_INTERVAL = 15
 local DREAD_ATTRIBUTE = GameState.PlayerAttribute.Dread
 
-local log = Logger.new("Copy")
+local log = Logger.new("THE_COPY")
 
 local CopyAI = {}
 
 local brain = Brain.new(CopyConfig)
 local model: Model = Body.build()
 local nav = Navigator.new(Vector3.zero)
+local escalation = Escalation.new()
+local settings: CopyConfig.StageSettings = CopyConfig.Stages.Dormant
 
--- Ambient visits only start after the scripted first sighting.
-local active = false
-local pursuitArmed = false
+local running = true
 local lastEncounter = os.clock()
+local lastFailureLog = 0
 
 local pendingNoise: Vector3? = nil
 local appearPoint: Vector3? = nil
@@ -58,6 +66,10 @@ local function eye(): Vector3
 	return nav.position + Vector3.new(0, Body.EYE_HEIGHT, 0)
 end
 
+local function roomAt(position: Vector3): string
+	return WorldService.zoneAt(position + Vector3.new(0, 3, 0)) or "an unknown place"
+end
+
 local function place()
 	model:PivotTo(CFrame.lookAt(nav.position, nav.position + nav.facing))
 end
@@ -67,6 +79,7 @@ local function appearAt(point: Vector3)
 	Body.setTransparency(model, 0)
 	place()
 	model.Parent = WorldService.runtimeFolder()
+	log:info(`Spawn successful: {roomAt(point)}`)
 end
 
 local function hide()
@@ -142,7 +155,7 @@ local function catch(player: Player)
 end
 
 local function onEnter(state: Brain.State, previous: Brain.State, seen: Senses.Seen?)
-	log:info(`{previous} -> {state}`)
+	log:info(`State: {previous} -> {state}`)
 
 	if previous == "Dormant" then
 		appearAt(appearPoint or nav.position)
@@ -153,8 +166,7 @@ local function onEnter(state: Brain.State, previous: Brain.State, seen: Senses.S
 	elseif state == "Observing" or state == "Disappearing" then
 		Navigator.stop(nav)
 	elseif state == "Investigating" then
-		local destination = lastKnown or nav.position
-		walkTo(destination)
+		walkTo(lastKnown or nav.position)
 	elseif state == "Searching" then
 		searchQueue = buildSearchQueue(lastKnown or nav.position)
 		nextSearchPoint()
@@ -176,8 +188,25 @@ local function onEnter(state: Brain.State, previous: Brain.State, seen: Senses.S
 	end
 end
 
+-- Finds a fair place to appear near `interest`, logging the request and any refusal.
+local function requestAppearance(interest: Vector3, reason: string): Vector3?
+	local point = Senses.pickAppearPoint(interest)
+	local now = os.clock()
+	if point then
+		log:info(`Spawn requested ({reason}) near {roomAt(interest)}`)
+	elseif now - lastFailureLog >= FAILURE_LOG_INTERVAL then
+		lastFailureLog = now
+		log:info(
+			`Spawn failed: {reason} near {roomAt(interest)}, but no observation point is both `
+				.. `out of sight and at least {CopyConfig.MinAppearDistance} studs from every player. `
+				.. "It will keep trying."
+		)
+	end
+	return point
+end
+
 local function think(dt: number)
-	local playing = SessionService.isPlaying() and CopyConfig.Enabled
+	local playing = running and CopyConfig.Enabled and SessionService.isPlaying()
 	local living: { { player: Player, root: BasePart } } = {}
 	if playing then
 		living = Senses.livingPlayers()
@@ -187,7 +216,7 @@ local function think(dt: number)
 	-- Sight: keep the current target if it is still visible, otherwise the closest one.
 	local seen: Senses.Seen? = nil
 	if present and playing then
-		for _, candidate in Senses.visiblePlayers(eye(), model) do
+		for _, candidate in Senses.visiblePlayers(eye(), model, settings.DetectionScale) do
 			if candidate.player == target then
 				seen = candidate
 				break
@@ -224,13 +253,15 @@ local function think(dt: number)
 		lastKnown = noise
 	end
 
-	-- Waking up needs a fair place to appear.
-	local wake = active and os.clock() - lastEncounter >= CopyConfig.AmbientInterval
+	-- Coming out needs a fair place to appear.
+	local interval = settings.VisitInterval
+	local wake = interval ~= nil and os.clock() - lastEncounter >= interval
 	if not present then
 		appearPoint = nil
 		local interest = noise or nearestPosition
-		if interest and (heard or wake) and brain.cooldown <= 0 then
-			appearPoint = Senses.pickAppearPoint(interest)
+		if interest and (heard or wake) and brain.cooldown <= 0 and #living > 0 then
+			appearPoint =
+				requestAppearance(interest, if heard then "it heard something" else "a visit")
 		end
 	end
 
@@ -262,7 +293,7 @@ local function think(dt: number)
 		nearestDistance = nearest,
 		arrived = Navigator.hasArrived(nav),
 		pathFailed = nav.failed,
-		pursuitArmed = pursuitArmed,
+		pursuitArmed = settings.Pursues,
 		caught = caught,
 	})
 	if state ~= previous then
@@ -296,38 +327,64 @@ local function move(dt: number)
 	if state == "Investigating" or state == "Searching" then
 		Navigator.step(nav, dt, CopyConfig.WalkSpeed)
 	elseif state == "Pursuing" and not Brain.isWarning(brain) then
-		Navigator.step(nav, dt, CopyConfig.PursueSpeed)
+		Navigator.step(nav, dt, settings.PursueSpeed)
 	end
 	place()
 end
 
--- Lets ambient visits begin (called after the scripted first sighting).
-function CopyAI.setActive(value: boolean)
-	active = value
-	lastEncounter = os.clock()
+-- Raises the escalation stage to `stage` ("Aware", "Hunting", "Hostile", "FinalPursuit").
+-- Stages are passed through one at a time and never go back; asking for the current or an
+-- earlier stage does nothing.
+function CopyAI.setStage(stage: string)
+	local steps = Escalation.advanceTo(escalation, stage, function(from, to)
+		log:info(`Escalation: {string.upper(from)} -> {string.upper(to)}`)
+	end)
+	if steps == 0 then
+		return
+	end
+	local current = Escalation.stage(escalation)
+	settings = CopyConfig.Stages[current]
+	Brain.tune(
+		brain,
+		{ LoseSightTime = settings.LoseSightTime, EncounterCooldown = settings.Cooldown }
+	)
+	ReplicatedStorage:SetAttribute(GameState.COPY_STAGE_ATTRIBUTE, current)
+
+	-- Each escalation is felt soon: no leftover quiet time, and the next visit is near.
+	Brain.clearCooldown(brain)
+	local interval = settings.VisitInterval
+	if interval then
+		lastEncounter = os.clock() - interval * 0.6
+	end
 end
 
--- Allows pursuits from now on and ends any cooldown, so the next noise brings it.
-function CopyAI.arm()
-	pursuitArmed = true
-	Brain.clearCooldown(brain)
+function CopyAI.getStage(): Escalation.Stage
+	return Escalation.stage(escalation)
+end
+
+function CopyAI.getStageSettings(): CopyConfig.StageSettings
+	return settings
 end
 
 -- Stops everything; it fades out if it is in the world.
 function CopyAI.shutdown()
-	active = false
-	pursuitArmed = false
+	running = false
 end
 
 -- Scripted sighting: it stands at `position` watching, then vanishes after `seconds` or as
 -- soon as a player comes within `fleeDistance`. Returns false if it is already out.
 function CopyAI.stageSighting(position: Vector3, seconds: number, fleeDistance: number): boolean
-	if brain.state ~= "Dormant" or not CopyConfig.Enabled then
+	log:info(`Spawn requested (scripted sighting) in {roomAt(position)}`)
+	if not CopyConfig.Enabled then
+		log:info("Spawn failed: CopyConfig.Enabled is false")
+		return false
+	elseif brain.state ~= "Dormant" then
+		log:info(`Spawn failed: it is already in the world ({brain.state})`)
 		return false
 	end
 	appearAt(Senses.ground(position))
 	Brain.stage(brain, seconds, fleeDistance)
-	log:info("Dormant -> Observing (staged sighting)")
+	log:info("State: Dormant -> Observing (scripted sighting)")
 	NetService.fireAll("Sound", "CopyPresence", position)
 	return true
 end
@@ -337,14 +394,30 @@ function CopyAI.getState(): Brain.State
 end
 
 function CopyAI.Start(_self: any)
+	ReplicatedStorage:SetAttribute(GameState.COPY_STAGE_ATTRIBUTE, Escalation.stage(escalation))
+
 	NoiseService.heard:Connect(function(position: Vector3, radius: number)
-		-- While dormant it is not in the world: only something loud draws it in.
-		-- Once it is out, it hears whatever reaches the place it is standing.
+		-- While it is away it is not in the world: only something loud enough for the
+		-- current stage draws it in. Once out, it hears whatever reaches where it stands.
 		local audible = if brain.state == "Dormant"
-			then radius >= CopyConfig.WakeNoiseRadius
+			then radius >= settings.WakeNoiseRadius
 			else (position - nav.position).Magnitude <= radius
 		if audible then
 			pendingNoise = position
+		end
+	end)
+
+	WorldService.onReady(function()
+		local points = #Senses.vantagePoints()
+		if points == 0 then
+			log:warn(
+				"Spawn failed: the map has no TLS_CopyVantage markers, so it has nowhere to appear. "
+					.. "Regenerate the map (docs/MAP_GENERATOR.md)."
+			)
+		else
+			log:info(
+				`AI initialized: {points} observation points, stage {Escalation.stage(escalation)}`
+			)
 		end
 	end)
 

@@ -60,16 +60,16 @@ function Senses.ground(position: Vector3): Vector3
 	return if hit then hit.Position else position
 end
 
--- Players it can see from `eye`: within range (further when their flashlight is on) and
--- with a clear line to them.
-function Senses.visiblePlayers(eye: Vector3, body: Instance): { Seen }
+-- Players it can see from `eye`: within range (further when their flashlight is on, and
+-- multiplied by `scale`) and with a clear line to them.
+function Senses.visiblePlayers(eye: Vector3, body: Instance, scale: number): { Seen }
 	local seen: { Seen } = {}
 	for _, entry in Senses.livingPlayers() do
 		local distance = (entry.root.Position - eye).Magnitude
 		local range = if FlashlightSystem.isOn(entry.player)
 			then CopyConfig.DetectionDistanceLit
 			else CopyConfig.DetectionDistance
-		if distance <= range and Senses.clearLine(eye, entry.root.Position, body) then
+		if distance <= range * scale and Senses.clearLine(eye, entry.root.Position, body) then
 			table.insert(seen, { player = entry.player, root = entry.root, distance = distance })
 		end
 	end

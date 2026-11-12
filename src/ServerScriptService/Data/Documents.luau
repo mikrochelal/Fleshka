@@ -49,7 +49,7 @@ local documents: { [string]: Document } = {
 			table.insert(lines, "")
 			table.insert(
 				lines,
-				"Any other order trips every breaker and you start again. It is also loud. "
+				"A breaker thrown out of turn trips straight back out. It is also loud. "
 					.. "Since last month I would rather not be loud down here."
 			)
 			table.insert(lines, "")
@@ -72,6 +72,61 @@ local documents: { [string]: Document } = {
 			"Recommendation: stop listening. I am aware of how that sounds.",
 			"",
 			"- Dr. M. Hale",
+		}, "\n"),
+	},
+
+	FeederNote = {
+		title = "SHIFT HANDOVER - ELECTRICAL CONTROL",
+		date = "16 OCT 1998",
+		body = table.concat({
+			"Okafor to night shift:",
+			"",
+			"Emergency supply only feeds lighting. Anything else has to be switched in by hand "
+				.. "from this room. The communications relay is on the big cabinet behind you - "
+				.. "it will not take until the lever in the Power Room is up.",
+			"",
+			"Director wants the relay left OFF tonight. Says the receivers are 'more than "
+				.. "switched on'. I do not know what that means and I did not ask.",
+			"",
+			"If you hear the relay close by itself, do not go and look. Call the desk.",
+		}, "\n"),
+	},
+
+	ExaminationLog = {
+		title = "MEDICAL - STAFF EXAMINATION LOG",
+		date = "14 OCT 1998",
+		body = table.concat({
+			"Fourth technician this week reporting the same thing: hearing their own voice on "
+				.. "the intercom while they were not speaking.",
+			"",
+			"Hearing normal. No fever. Each of them can repeat, word for word, what the voice "
+				.. "said. None of them remembers ever saying it.",
+			"",
+			"Weller asked me today whether a recording can be made of something that has not "
+				.. "happened yet. I have moved him to the patient room for observation.",
+			"",
+			"Requesting the quarantine corridor be sealed until we understand what is being "
+				.. "copied, and from whom.",
+			"",
+			"- Dr. A. Reyes, Station Physician",
+		}, "\n"),
+	},
+
+	TapeTranscript = {
+		title = "TRANSCRIPT - TAPE 9-114",
+		date = "12 OCT 1998",
+		body = table.concat({
+			"[Recorded in the signal chamber. Dr. Hale alone.]",
+			"",
+			"HALE: Test one hundred fourteen. Transmitting call sign.",
+			"[11 seconds of carrier]",
+			"VOICE: Test one hundred fifteen. Transmitting call sign.",
+			"HALE: ...That is tomorrow's test.",
+			"VOICE: That is tomorrow's test.",
+			"HALE: Who is this?",
+			"VOICE: Hale.",
+			"",
+			"[Note in margin, Hale's handwriting:] It answered before I finished asking.",
 		}, "\n"),
 	},
 }

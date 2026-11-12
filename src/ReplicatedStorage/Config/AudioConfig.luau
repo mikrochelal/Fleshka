@@ -37,5 +37,9 @@ return table.freeze({
 		Caught = cue(1),
 		BatteryPickup = cue(0.5),
 		FlashlightClick = cue(0.4),
+		-- Machinery spinning up when power or a subsystem comes on.
+		Machinery = cue(0.8, false, 160),
+		-- The ending: a rising, distorted, voice-like signal - not a human scream.
+		FinalSignal = cue(1),
 	} :: { [string]: Cue }),
 })

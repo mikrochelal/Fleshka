@@ -4,7 +4,7 @@
 
 return table.freeze({
 	GameName = "THE LAST SIGNAL",
-	Version = "0.3.0",
+	Version = "0.4.0",
 
 	MinPartySize = 1,
 	MaxPartySize = 4,
