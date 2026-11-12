@@ -4,7 +4,7 @@
 
 return table.freeze({
 	GameName = "THE LAST SIGNAL",
-	Version = "0.4.0",
+	Version = "0.5.0",
 
 	MinPartySize = 1,
 	MaxPartySize = 4,
@@ -14,6 +14,8 @@ return table.freeze({
 
 	-- Until the menu and lobby exist, the session starts by itself when a player is ready.
 	AutoStartSession = true,
+	-- Seconds the loading card stays up while the session is prepared.
+	LoadingSeconds = 2,
 	-- Seconds the title card stays up before play begins.
-	IntroSeconds = 7,
+	IntroSeconds = 8,
 })

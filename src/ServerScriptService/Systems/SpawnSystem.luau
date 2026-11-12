@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 
 local PlayerConfig = require(ReplicatedStorage.Config.PlayerConfig)
 local Logger = require(ReplicatedStorage.Shared.Logger)
+local ObjectiveService = require(script.Parent.Parent.Services.ObjectiveService)
 local PlayerService = require(script.Parent.Parent.Services.PlayerService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
 
@@ -139,6 +140,12 @@ function SpawnSystem.placeInRoom(player: Player, roomName: string): boolean
 	return SpawnSystem.placeAtStart(player)
 end
 
+-- Places the player's current character at the current chapter's checkpoint room (after
+-- being caught, or after a respawn once the mission is under way).
+function SpawnSystem.placeAtCheckpoint(player: Player): boolean
+	return SpawnSystem.placeInRoom(player, ObjectiveService.checkpointRoom())
+end
+
 function SpawnSystem.Start(_self: any)
 	PlayerService.observePlayers(function(player)
 		-- Shift is the sprint key, so it must not toggle the mouse lock.
@@ -150,8 +157,18 @@ function SpawnSystem.Start(_self: any)
 			if player.Character ~= character then
 				return
 			end
-			if SpawnSystem.placeAtStart(player) then
-				log:info(`{player.Name} placed at the station entrance`)
+			-- A character that respawns mid-mission returns to the chapter's checkpoint,
+			-- not to the elevator on the far side of the station.
+			local respawn = ObjectiveService.isCompleted("EnterStation")
+			local placed = if respawn
+				then SpawnSystem.placeAtCheckpoint(player)
+				else SpawnSystem.placeAtStart(player)
+			if placed then
+				log:info(
+					`{player.Name} placed at {if respawn
+						then ObjectiveService.checkpointRoom()
+						else "the station entrance"}`
+				)
 			else
 				log:warn(`Could not place {player.Name} in the station`)
 			end
