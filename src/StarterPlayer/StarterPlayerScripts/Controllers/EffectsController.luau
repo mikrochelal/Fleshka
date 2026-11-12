@@ -203,7 +203,7 @@ local function build()
 		ZIndex = 6,
 	}, card)
 	Theme.border(cardButton, Theme.Color.Accent, 0.4)
-	for _, element in { cardTitle, cardBody, cardButton } do
+	for _, element in { cardTitle :: Instance, cardBody, cardButton } do
 		Theme.autoScale(element)
 	end
 	cardButton.Activated:Connect(hideCard)
