@@ -13,7 +13,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
 
 local Logger = require(ReplicatedStorage.Shared.Logger)
+local GameState = require(ReplicatedStorage.Shared.GameState)
 local Signal = require(ReplicatedStorage.Shared.Signal)
+
+local ROOM_ATTRIBUTE = GameState.PlayerAttribute.Room
 
 local ZONE_TAG = "TLS_Zone"
 local SPAWN_TAG = "TLS_Spawn"
@@ -126,6 +129,8 @@ local function trackPlayers()
 			local zone = WorldService.zoneAt(root.Position)
 			if zone and zone ~= playerZone[player] then
 				playerZone[player] = zone
+				-- Replicated so the client can pick the room's ambience.
+				player:SetAttribute(ROOM_ATTRIBUTE, zone)
 				WorldService.zoneEntered:Fire(player, zone)
 			end
 		end
