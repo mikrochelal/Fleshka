@@ -65,6 +65,18 @@ function FacilityLights.isCircuitOn(circuit: string): boolean
 	return circuitOff[circuit] ~= true
 end
 
+-- True when at least one lamp in the room is on a live circuit (a flicker does not count
+-- as darkness). A room with no lamps at all is dark.
+function FacilityLights.isRoomLit(room: string): boolean
+	ensure()
+	for _, entry in entries do
+		if entry.room == room and FacilityLights.isCircuitOn(entry.circuit) then
+			return true
+		end
+	end
+	return false
+end
+
 function FacilityLights.setCircuit(circuit: string, on: boolean)
 	ensure()
 	circuitOff[circuit] = not on
