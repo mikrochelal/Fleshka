@@ -1,0 +1,141 @@
+--!nonstrict
+-- Gameplay objects the game places in the station while it runs. Pure data.
+--
+-- The generated map is architecture only, so documents, the radio, battery packs and the
+-- elevator panel are created at runtime (Systems/WorldProps) and exist only during play.
+-- Positions are fractions of the room's footprint (fx along X, fz along Z, 0..1), measured
+-- from the room's zone, so they follow the room if the layout ever changes.
+--
+--   reuse  name of an existing map part in that room to use instead of creating one
+--   stand  size {x, y, z} of a plinth the item sits on (omit for wall-mounted items)
+--   y      height of the item's underside above the floor when there is no stand
+--
+-- tests/props.luau checks every entry against the map layout: inside its room, clear of
+-- doorways and of the map's own placeholder props.
+
+return {
+	{
+		id = "ElevatorPanel",
+		kind = "ElevatorPanel",
+		room = "A_Elevator",
+		fx = 0.5,
+		fz = 0.065,
+		y = 3,
+		size = { 3, 4, 0.6 },
+		look = "panel",
+		action = "Call the elevator",
+		object = "Elevator control",
+		enabled = false,
+	},
+	{
+		id = "IncidentLog",
+		kind = "Document",
+		room = "A_Lobby",
+		fx = 0.6,
+		fz = 0.12,
+		stand = { 3, 3, 2 },
+		size = { 2.2, 0.15, 1.6 },
+		look = "paper",
+		action = "Read",
+		object = "Incident log",
+	},
+	{
+		id = "StartupMemo",
+		kind = "Document",
+		room = "A_SecurityBooth",
+		fx = 0.25,
+		fz = 0.15,
+		stand = { 3, 3, 2 },
+		size = { 2.2, 0.15, 1.6 },
+		look = "paper",
+		action = "Read",
+		object = "Maintenance memo",
+	},
+	{
+		id = "ResearchNote",
+		kind = "Document",
+		room = "B_Office101",
+		fx = 0.25,
+		fz = 0.3,
+		stand = { 3, 3, 2 },
+		size = { 2.2, 0.15, 1.6 },
+		look = "paper",
+		action = "Read",
+		object = "Research note",
+	},
+	{
+		id = "MainLever",
+		kind = "MainLever",
+		room = "B_PowerRoom",
+		reuse = "Placeholder_MainLever",
+		fx = 0.961,
+		fz = 0.583,
+		y = 3,
+		size = { 0.6, 4, 2 },
+		look = "panel",
+		action = "Throw the main lever",
+		object = "Emergency power",
+	},
+	{
+		id = "Radio",
+		kind = "Radio",
+		room = "B_MonitorRoom",
+		fx = 0.85,
+		fz = 0.5,
+		stand = { 4, 3, 3 },
+		size = { 2, 1.4, 1.2 },
+		look = "radio",
+		action = "Listen",
+		object = "Radio receiver",
+		enabled = false,
+	},
+	{
+		id = "CommConsole",
+		kind = "CommConsole",
+		room = "D_CommCenter",
+		reuse = "Placeholder_CentralComputer",
+		fx = 0.5,
+		fz = 0.1,
+		stand = { 8, 2, 3 },
+		size = { 6, 3, 2 },
+		look = "panel",
+		action = "Use the console",
+		object = "Central computer",
+	},
+	{
+		id = "Battery_Lockers",
+		kind = "Battery",
+		room = "A_Lockers",
+		fx = 0.5,
+		fz = 0.3,
+		stand = { 2.5, 2.5, 2.5 },
+		size = { 0.8, 0.6, 1.4 },
+		look = "battery",
+		action = "Take",
+		object = "Battery pack",
+	},
+	{
+		id = "Battery_Maintenance",
+		kind = "Battery",
+		room = "B_Maintenance",
+		fx = 0.25,
+		fz = 0.6,
+		stand = { 2.5, 2.5, 2.5 },
+		size = { 0.8, 0.6, 1.4 },
+		look = "battery",
+		action = "Take",
+		object = "Battery pack",
+	},
+	{
+		id = "Battery_Operator",
+		kind = "Battery",
+		room = "D_OperatorOffice",
+		fx = 0.6,
+		fz = 0.75,
+		stand = { 2.5, 2.5, 2.5 },
+		size = { 0.8, 0.6, 1.4 },
+		look = "battery",
+		action = "Take",
+		object = "Battery pack",
+	},
+}

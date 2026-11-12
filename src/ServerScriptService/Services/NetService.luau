@@ -29,8 +29,19 @@ local function argsMatch(definition: Net.Definition, args: { n: number, [number]
 	return true
 end
 
+-- Reuses an existing remote so a second run can never create duplicates.
+local function ensureRemote(folder: Instance, name: string): RemoteEvent
+	local remote = folder:FindFirstChild(name)
+	if remote and remote:IsA("RemoteEvent") then
+		return remote
+	end
+	local created = Instance.new("RemoteEvent")
+	created.Name = name
+	created.Parent = folder
+	return created
+end
+
 function NetService.Init(_self: any)
-	-- Reuse an existing folder so a second run can never create duplicates.
 	local folder = ReplicatedStorage:FindFirstChild(Net.FOLDER_NAME)
 	if not folder then
 		folder = Instance.new("Folder")
@@ -39,14 +50,11 @@ function NetService.Init(_self: any)
 	end
 
 	for name, definition in Net.ClientEvents do
-		local remote = folder:FindFirstChild(name)
-		if not remote or not remote:IsA("RemoteEvent") then
-			remote = Instance.new("RemoteEvent")
-			remote.Name = name
-			remote.Parent = folder
-		end
-		remotes[name] = remote :: RemoteEvent
+		remotes[name] = ensureRemote(folder :: Instance, name)
 		limiters[name] = RateLimiter.new(definition.burst, definition.perSecond)
+	end
+	for _, name in Net.ServerEvents do
+		remotes[name] = ensureRemote(folder :: Instance, name)
 	end
 
 	Players.PlayerRemoving:Connect(function(player)
@@ -79,6 +87,21 @@ function NetService.on(name: string, handler: (player: Player, ...any) -> ())
 			log:warn(`Handler for {name} failed: {err}`)
 		end
 	end)
+end
+
+local function serverRemote(name: string): RemoteEvent
+	assert(table.find(Net.ServerEvents, name), `Unknown server event "{name}"`)
+	return remotes[name]
+end
+
+-- Sends a server event (see Shared/Net) to one player.
+function NetService.fire(name: string, player: Player, ...: any)
+	serverRemote(name):FireClient(player, ...)
+end
+
+-- Sends a server event to every player.
+function NetService.fireAll(name: string, ...: any)
+	serverRemote(name):FireAllClients(...)
 end
 
 return NetService

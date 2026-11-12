@@ -6,9 +6,24 @@ export type Phase = "Lobby" | "Loading" | "Intro" | "Playing" | "Finale" | "Endi
 
 local GameState = {}
 
--- Attributes on ReplicatedStorage through which the server replicates its state.
+-- Attributes on ReplicatedStorage through which the server replicates shared state.
 GameState.PHASE_ATTRIBUTE = "TLS_Phase"
 GameState.MODE_ATTRIBUTE = "TLS_Mode"
+-- Index (1-based) of the current objective in Config/ObjectiveConfig; one past the end when
+-- every objective is complete.
+GameState.OBJECTIVE_ATTRIBUTE = "TLS_Objective"
+GameState.POWER_ATTRIBUTE = "TLS_PowerOn"
+-- Seconds the session took, set when it ends.
+GameState.DURATION_ATTRIBUTE = "TLS_SessionSeconds"
+
+-- Attributes on each Player through which the server replicates that player's state.
+GameState.PlayerAttribute = table.freeze({
+	Stamina = "TLS_Stamina", -- 0..100
+	Exhausted = "TLS_Exhausted", -- boolean
+	Battery = "TLS_Battery", -- 0..100
+	FlashlightOn = "TLS_FlashlightOn", -- boolean
+	Dread = "TLS_Dread", -- 0..1, how close THE COPY is
+})
 
 GameState.Phase = table.freeze({
 	Lobby = "Lobby" :: Phase,

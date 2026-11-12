@@ -50,6 +50,11 @@ function SessionService.getPhase(): GameState.Phase
 	return phase
 end
 
+-- True while the mission itself is running (not during menus, intro or ending).
+function SessionService.isPlaying(): boolean
+	return phase == GameState.Phase.Playing
+end
+
 -- Returns false (and changes nothing) when the transition is not allowed.
 function SessionService.setPhase(to: GameState.Phase): boolean
 	if not GameState.canTransition(phase, to) then
