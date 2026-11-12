@@ -25,15 +25,20 @@ Net.ClientEvents = table.freeze({
 	SprintIntent = { args = { "boolean" }, burst = 8, perSecond = 4 },
 	-- The player pressed the flashlight control.
 	FlashlightToggle = { args = {}, burst = 4, perSecond = 2 },
+	-- The player entered a code on a keypad: (lockId, digits).
+	SubmitCode = { args = { "string", "string" }, burst = 3, perSecond = 0.5 },
 } :: { [string]: Definition })
 
--- Server -> client events (presentation only; state lives in attributes).
---   Notify(text: string, kind: "info" | "warning" | "objective")
---   Subtitle(speaker: string, text: string, seconds: number)
---   ShowDocument(title: string, date: string, body: string)
+-- Server -> client events (presentation only; state lives in attributes). Every `text`
+-- is an encoded reference (Shared/Text) that the client renders in its own language.
+--   Notify(text, kind: "info" | "warning" | "objective")
+--   Subtitle(speaker: text, text, seconds: number)
+--   ShowDocument(id: string, title: text, date: text, body: text)
 --   Effect(name: "Interference" | "Blackout", seconds: number)
---   Sound(cue: string, position: Vector3?)   cue names are keys of Config/AudioConfig
-Net.ServerEvents = table.freeze({ "Notify", "Subtitle", "ShowDocument", "Effect", "Sound" })
+--   Sound(cue: string, position: Vector3?)   cue names are keys of Config/AudioConfig.Cues
+--   Keypad(lockId: string, title: text, digits: number)   opens the code entry panel
+Net.ServerEvents =
+	table.freeze({ "Notify", "Subtitle", "ShowDocument", "Effect", "Sound", "Keypad" })
 
 local function waitForRemote(name: string): RemoteEvent
 	local folder = ReplicatedStorage:WaitForChild(Net.FOLDER_NAME)

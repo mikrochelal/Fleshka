@@ -3,9 +3,18 @@
 -- (its model is placed directly at this point), so it cannot fall, get pushed or get
 -- physically stuck; if a path cannot be planned the walk is reported as failed and the
 -- caller decides what to do.
+--
+-- Path requests are kept rare: at most one per CopyConfig.RepathInterval, none when the
+-- new destination is where the current route already ends, and none for a point that has
+-- just been found unreachable (a locked door is a solid part, so what is behind it simply
+-- fails). A route that becomes blocked is planned again once; a plan that takes too long
+-- counts as a failure.
 
 local PathfindingService = game:GetService("PathfindingService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
+
+local CopyConfig = require(ReplicatedStorage.Config.CopyConfig)
 
 export type Navigator = {
 	position: Vector3,
@@ -17,8 +26,22 @@ export type Navigator = {
 	pending: boolean,
 	failed: boolean,
 	hasRoute: boolean,
+	-- Walks in a row that could not be planned.
+	failures: number,
 	-- Bumped by every request so a slow, outdated plan is ignored.
 	token: number,
+	-- Where the current route (or the plan in progress) leads.
+	destination: Vector3?,
+	-- A request waiting for the minimum interval to pass.
+	queued: Vector3?,
+	lastRequest: number,
+	-- The route ahead was reported blocked and has to be planned again.
+	blocked: boolean,
+	blockedConnection: RBXScriptConnection?,
+	-- The last destination that could not be reached, and when that was found out.
+	unreachable: Vector3?,
+	unreachableAt: number,
+	ignore: { Instance },
 }
 
 local AGENT = {
@@ -27,6 +50,10 @@ local AGENT = {
 	AgentCanJump = false,
 	WaypointSpacing = 6,
 }
+-- Destinations this close together are the same destination.
+local SAME_DESTINATION = 3
+-- A point found unreachable is not tried again for this long.
+local UNREACHABLE_MEMORY = 8
 
 local Navigator = {}
 
@@ -39,7 +66,16 @@ function Navigator.new(position: Vector3): Navigator
 		pending = false,
 		failed = false,
 		hasRoute = false,
+		failures = 0,
 		token = 0,
+		destination = nil,
+		queued = nil,
+		lastRequest = -math.huge,
+		blocked = false,
+		blockedConnection = nil,
+		unreachable = nil,
+		unreachableAt = -math.huge,
+		ignore = {},
 	}
 end
 
@@ -51,13 +87,44 @@ local function straightLineIsClear(from: Vector3, to: Vector3, ignore: { Instanc
 	return Workspace:Raycast(from + lift, to - from, params) == nil
 end
 
--- Starts walking to `destination` (a point on the floor). While the new route is being
--- planned the entity keeps following its previous one.
-function Navigator.goTo(nav: Navigator, destination: Vector3, ignore: { Instance })
+local function unwatch(nav: Navigator)
+	local connection = nav.blockedConnection
+	if connection then
+		connection:Disconnect()
+		nav.blockedConnection = nil
+	end
+	nav.blocked = false
+end
+
+local function fail(nav: Navigator, destination: Vector3)
+	nav.pending = false
+	nav.failed = true
+	nav.hasRoute = false
+	nav.waypoints = {}
+	nav.index = 1
+	nav.destination = nil
+	nav.failures += 1
+	nav.unreachable = destination
+	nav.unreachableAt = os.clock()
+end
+
+local function plan(nav: Navigator, destination: Vector3)
+	unwatch(nav)
 	nav.token += 1
 	local token = nav.token
 	nav.pending = true
 	nav.failed = false
+	nav.queued = nil
+	nav.destination = destination
+	nav.lastRequest = os.clock()
+
+	task.delay(CopyConfig.PathTimeout, function()
+		if token == nav.token and nav.pending then
+			-- Too slow: whatever the plan turns out to be, it is no longer wanted.
+			nav.token += 1
+			fail(nav, destination)
+		end
+	end)
 
 	task.spawn(function()
 		local from = nav.position
@@ -76,35 +143,87 @@ function Navigator.goTo(nav: Navigator, destination: Vector3, ignore: { Instance
 					table.insert(route, waypoint.Position)
 				end
 			end
-		elseif straightLineIsClear(from, destination, ignore) then
+			-- Route entry i is path waypoint i + 1.
+			nav.blockedConnection = path.Blocked:Connect(function(blockedIndex: number)
+				if token == nav.token and blockedIndex - 1 >= nav.index then
+					nav.blocked = true
+				end
+			end)
+		elseif straightLineIsClear(from, destination, nav.ignore) then
 			table.insert(route, destination)
 		end
 
-		nav.pending = false
 		if #route == 0 then
-			nav.failed = true
-			nav.hasRoute = false
-			nav.waypoints = {}
-		else
-			nav.waypoints = route
-			nav.hasRoute = true
+			fail(nav, destination)
+			return
 		end
+		nav.pending = false
+		nav.waypoints = route
 		nav.index = 1
+		nav.hasRoute = true
+		nav.failures = 0
 	end)
 end
 
+local function near(a: Vector3?, b: Vector3): boolean
+	return a ~= nil and (a - b).Magnitude <= SAME_DESTINATION
+end
+
+-- Starts walking to `destination` (a point on the floor); `ignore` lists instances that do
+-- not block it. While the new route is being planned the entity keeps following its
+-- previous one. Calling this again for the same destination costs nothing.
+function Navigator.goTo(nav: Navigator, destination: Vector3, ignore: { Instance })
+	nav.ignore = ignore
+	local now = os.clock()
+	if near(nav.destination, destination) and not nav.failed and not nav.blocked then
+		nav.queued = nil
+		return
+	elseif near(nav.unreachable, destination) and now - nav.unreachableAt < UNREACHABLE_MEMORY then
+		-- Known to be unreachable: fail at once instead of asking again.
+		if not nav.failed then
+			nav.token += 1
+			unwatch(nav)
+			fail(nav, destination)
+		end
+		nav.queued = nil
+		return
+	end
+	nav.failed = false
+	if nav.pending or now - nav.lastRequest < CopyConfig.RepathInterval then
+		nav.queued = destination
+	else
+		plan(nav, destination)
+	end
+end
+
 function Navigator.stop(nav: Navigator)
+	unwatch(nav)
 	nav.token += 1
 	nav.pending = false
 	nav.failed = false
 	nav.hasRoute = false
 	nav.waypoints = {}
 	nav.index = 1
+	nav.destination = nil
+	nav.queued = nil
+end
+
+-- Puts it somewhere else with nothing planned and nothing remembered.
+function Navigator.teleport(nav: Navigator, position: Vector3)
+	Navigator.stop(nav)
+	nav.position = position
+	nav.failures = 0
+	nav.unreachable = nil
+end
+
+-- True while a walk has been asked for and has neither finished nor failed.
+function Navigator.isBusy(nav: Navigator): boolean
+	return nav.pending or nav.queued ~= nil or (nav.hasRoute and nav.index <= #nav.waypoints)
 end
 
 -- True once the last requested walk has reached its end.
 function Navigator.hasArrived(nav: Navigator): boolean
-	return nav.hasRoute and not nav.pending and nav.index > #nav.waypoints
+	return nav.hasRoute and not nav.pending and nav.queued == nil and nav.index > #nav.waypoints
 end
 
 function Navigator.face(nav: Navigator, target: Vector3)
@@ -114,8 +233,27 @@ function Navigator.face(nav: Navigator, target: Vector3)
 	end
 end
 
--- Advances along the route by `speed * dt` studs.
+-- Sends the request that was waiting for the minimum interval, and plans a blocked route
+-- again. Cheap; called on every think.
+function Navigator.update(nav: Navigator)
+	if nav.pending or os.clock() - nav.lastRequest < CopyConfig.RepathInterval then
+		return
+	end
+	local queued = nav.queued
+	local destination = nav.destination
+	if queued then
+		plan(nav, queued)
+	elseif nav.blocked and destination then
+		plan(nav, destination)
+	end
+end
+
+-- Advances along the route by `speed * dt` studs. It waits in front of a blocked route
+-- until the new plan arrives.
 function Navigator.step(nav: Navigator, dt: number, speed: number)
+	if nav.blocked then
+		return
+	end
 	local remaining = speed * dt
 	while remaining > 0 and nav.index <= #nav.waypoints do
 		local waypoint = nav.waypoints[nav.index]

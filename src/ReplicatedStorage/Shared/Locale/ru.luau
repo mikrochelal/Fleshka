@@ -1,0 +1,2 @@
+--!strict
+return {} :: { [string]: string }
