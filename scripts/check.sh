@@ -35,6 +35,32 @@ stylua --check src tests
 echo "== selene"
 selene src
 
+echo "== localization: every key used in code exists"
+# Keys are string literals with a known prefix. Dynamic keys (documents) are covered by
+# tests/localization.luau.
+KEY_PATTERN='"(UI|NOTIFY|LABEL|INTERACTION|OBJECT|OBJECTIVE|OPTIONAL|PROGRESS|DOOR_REASON|SPEAKER|RADIO|CONSOLE|PA|CHAPTER|BREAKER|DOCUMENT)_[A-Z0-9_]+"'
+used=$(grep -rhoE "$KEY_PATTERN" src --include='*.luau' --exclude-dir=Locale | tr -d '"' | sort -u)
+defined=$(grep -oE '^[[:space:]]+[A-Z0-9_]+ = ' src/ReplicatedStorage/Shared/Locale/en.luau | tr -d ' \t=' | sort -u)
+missing=$(comm -23 <(echo "$used") <(echo "$defined"))
+if [ -n "$missing" ]; then
+	echo "ERROR: keys used in code but missing from Shared/Locale/en.luau:" >&2
+	echo "$missing" >&2
+	exit 1
+fi
+# Interface text must come from the localization tables, never from a literal.
+if grep -rnE 'Text = "[^"]*[A-Za-z]{2,}' src/StarterPlayer; then
+	echo "ERROR: hard-coded interface text (use LocalizationController.t)" >&2
+	exit 1
+fi
+
+echo "== audio: every asset id is recorded in ASSET_MANIFEST.md"
+for id in $(grep -oE '^[[:space:]]+[A-Za-z0-9]+ = [1-9][0-9]+,' src/ReplicatedStorage/Config/AudioConfig.luau | grep -oE '[0-9]{6,}' | sort -u); do
+	if ! grep -q "$id" ASSET_MANIFEST.md; then
+		echo "ERROR: audio asset $id is used in AudioConfig but not listed in ASSET_MANIFEST.md" >&2
+		exit 1
+	fi
+done
+
 echo "== unit tests"
 # Pure-logic tests need the standalone Luau CLI (https://github.com/luau-lang/luau/releases).
 if command -v luau >/dev/null 2>&1; then
@@ -42,6 +68,18 @@ if command -v luau >/dev/null 2>&1; then
 	luau tests/map.luau
 	luau tests/copy.luau
 	luau tests/props.luau
+	luau tests/localization.luau
+	luau tests/flashlight.luau
+	luau tests/mission.luau
+	luau tests/audio.luau
+
+	echo "== localization table export is up to date"
+	luau scripts/export_localization.luau > build/localization.csv
+	if ! diff -q build/localization.csv localization/TheLastSignal_Localization.csv >/dev/null; then
+		echo "ERROR: localization/TheLastSignal_Localization.csv is out of date. Run:" >&2
+		echo "  luau scripts/export_localization.luau > localization/TheLastSignal_Localization.csv" >&2
+		exit 1
+	fi
 else
 	echo "SKIPPED: luau CLI not installed - unit tests did not run"
 fi

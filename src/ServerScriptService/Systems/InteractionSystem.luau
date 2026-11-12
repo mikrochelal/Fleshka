@@ -3,8 +3,9 @@
 --
 -- World contract: an object tagged `TLS_Interactable` (a BasePart, Attachment, or a Model
 -- with a PrimaryPart, inside Workspace) with string attributes `Kind` and `Id`.
--- Optional attributes: `ActionText`, `ObjectText` (prompt wording) and `InteractEnabled`
--- (boolean, default true). Changing any of them at runtime updates the prompt.
+-- Optional attributes: `ActionText`, `ObjectText` (prompt wording: a localization key from
+-- Shared/Locale, or plain text shown as written) and `InteractEnabled` (boolean, default
+-- true). Changing any of them at runtime updates the prompt.
 --
 -- The server adds a ProximityPrompt to each tagged object. Prompts give keyboard, touch and
 -- gamepad input for free, but the trigger comes from the client, so every trigger is
@@ -16,6 +17,7 @@ local Workspace = game:GetService("Workspace")
 
 local InteractionConfig = require(ReplicatedStorage.Config.InteractionConfig)
 local Logger = require(ReplicatedStorage.Shared.Logger)
+local Localization = require(ReplicatedStorage.Shared.Localization)
 local PlayerService = require(script.Parent.Parent.Services.PlayerService)
 
 export type Handler = (player: Player, target: Instance, id: string) -> ()
@@ -24,6 +26,11 @@ type Binding = { prompt: ProximityPrompt, connections: { RBXScriptConnection } }
 
 local TAG = "TLS_Interactable"
 local PROMPT_NAME = "TLS_Prompt"
+-- Client contract (Controllers/WorldTextController): prompts carry this tag and the two
+-- attributes hold the text references to render.
+local PROMPT_TAG = "TLS_LocalizedPrompt"
+local ACTION_ATTRIBUTE = "TLS_Action"
+local OBJECT_ATTRIBUTE = "TLS_Object"
 local WATCHED_ATTRIBUTES = { "ActionText", "ObjectText", "InteractEnabled" }
 
 local log = Logger.new("Interaction")
@@ -146,11 +153,20 @@ local function onTriggered(player: Player, target: Instance)
 	end
 end
 
+-- The prompt wording is a localization key (or plain text). The English text is set here
+-- as a fallback; each client replaces it with its own language from the two attributes
+-- (Controllers/WorldTextController).
 local function refresh(target: Instance, prompt: ProximityPrompt)
 	local actionText = target:GetAttribute("ActionText")
 	local objectText = target:GetAttribute("ObjectText")
-	prompt.ActionText = if type(actionText) == "string" then actionText else "Interact"
-	prompt.ObjectText = if type(objectText) == "string" then objectText else ""
+	local action = if type(actionText) == "string" then actionText else "INTERACTION_DEFAULT"
+	local object = if type(objectText) == "string" then objectText else ""
+	prompt:SetAttribute(ACTION_ATTRIBUTE, action)
+	prompt:SetAttribute(OBJECT_ATTRIBUTE, object)
+	prompt.ActionText = Localization.render(Localization.SOURCE, action)
+	prompt.ObjectText = if object == ""
+		then ""
+		else Localization.render(Localization.SOURCE, object)
 	prompt.Enabled = isEnabled(target)
 end
 
@@ -184,6 +200,9 @@ local function bind(target: Instance)
 	end
 	prompt.MaxActivationDistance = InteractionConfig.MaxDistance
 	prompt.RequiresLineOfSight = InteractionConfig.RequireLineOfSight
+	-- The game translates the prompt itself; Roblox must not capture or translate it.
+	prompt.AutoLocalize = false
+	prompt:AddTag(PROMPT_TAG)
 	refresh(target, prompt)
 	prompt.Parent = anchor
 

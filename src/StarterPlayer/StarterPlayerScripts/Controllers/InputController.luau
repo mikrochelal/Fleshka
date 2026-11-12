@@ -11,7 +11,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Logger = require(Shared:WaitForChild("Logger"))
 local Net = require(Shared:WaitForChild("Net"))
+
+local log = Logger.new("Flashlight")
 
 local SPRINT_KEYS = { Enum.KeyCode.LeftShift, Enum.KeyCode.ButtonL3 }
 local FLASHLIGHT_KEYS = { Enum.KeyCode.F, Enum.KeyCode.ButtonY }
@@ -37,9 +40,13 @@ function InputController.isSprintHeld(): boolean
 	return sprinting
 end
 
+-- Asks the server to switch the flashlight. The server decides; the result comes back as
+-- the player's FlashlightOn attribute (see FlashlightController).
 function InputController.toggleFlashlight()
 	if flashlightRemote then
 		flashlightRemote:FireServer()
+	else
+		log:warn("Error: toggle pressed before the FlashlightToggle remote was found")
 	end
 end
 

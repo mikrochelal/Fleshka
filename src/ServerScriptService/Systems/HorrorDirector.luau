@@ -6,21 +6,25 @@
 -- main corridor the lights there flicker and a silhouette stands at the far end. It leaves
 -- after a few seconds, or as soon as someone walks toward it.
 --
--- Disturbances (repeating): while THE COPY is away, the lights of a room a player is in
--- stutter briefly. How often depends on its escalation stage; before power, never.
+-- Disturbances (repeating): while THE COPY is away, something small happens near a
+-- player: lights stutter, metal knocks somewhere close, the receiver crackles, or it is
+-- heard far off. How often depends on its escalation stage; before power, never.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local CopyConfig = require(ReplicatedStorage.Config.CopyConfig)
 local Logger = require(ReplicatedStorage.Shared.Logger)
+local AudioService = require(script.Parent.Parent.Services.AudioService)
 local NetService = require(script.Parent.Parent.Services.NetService)
 local SessionService = require(script.Parent.Parent.Services.SessionService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
 local CopyAI = require(script.Parent.CopyAI)
 local FacilityLights = require(script.Parent.FacilityLights)
+local RadioSystem = require(script.Parent.RadioSystem)
 local Senses = require(script.Parent.CopyAI.Senses)
 
 local FLICKER_SECONDS = 2.4
+local DISTANT_CUES = { "DistantMetal1", "DistantMetal2", "DistantMetal3" }
 -- How far from the end wall the silhouette stands.
 local END_INSET = 6
 local DISTURBANCE_SECONDS = 0.9
@@ -117,16 +121,41 @@ function HorrorDirector.armCorridorSighting()
 	task.delay(CopyConfig.SightingFallbackSeconds, playSighting)
 end
 
+-- A point `distance` studs from `origin` in a random horizontal direction.
+local function somewhereNear(origin: Vector3, distance: number): Vector3
+	local angle = random:NextNumber(0, math.pi * 2)
+	return origin + Vector3.new(math.cos(angle), 0, math.sin(angle)) * distance
+end
+
+-- One small sign that the station is not empty. Which one is random, so no two walks
+-- through the same corridor sound alike:
+--   lights stutter in a player's room with a metallic noise somewhere close;
+--   something is heard moving far away (from the Hunting stage on);
+--   the receiver in the Monitor Room crackles.
 local function disturb()
 	local living = Senses.livingPlayers()
 	if #living == 0 then
 		return
 	end
 	local entry = living[random:NextInteger(1, #living)]
-	local room = WorldService.getPlayerZone(entry.player)
-	if room then
-		FacilityLights.flickerRooms({ room }, DISTURBANCE_SECONDS)
-		NetService.fireAll("Sound", "DistantMetal", entry.root.Position)
+	local stage = CopyAI.getStage()
+	local roll = random:NextNumber()
+
+	if roll < 0.3 and CopyAI.getStageSettings().Pursues then
+		log:info("Disturbance: a distant presence")
+		AudioService.play("CopyDistant", somewhereNear(entry.root.Position, 80))
+	elseif roll < 0.55 then
+		RadioSystem.pulse(stage)
+	else
+		local room = WorldService.getPlayerZone(entry.player)
+		if room then
+			log:info(`Disturbance: lights stutter in {room}`)
+			FacilityLights.flickerRooms({ room }, DISTURBANCE_SECONDS)
+			AudioService.play(
+				DISTANT_CUES[random:NextInteger(1, #DISTANT_CUES)],
+				somewhereNear(entry.root.Position, 45)
+			)
+		end
 	end
 end
 

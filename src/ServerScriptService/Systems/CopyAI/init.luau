@@ -1,237 +1,160 @@
 --!strict
--- THE COPY: a server-controlled entity in the world. This module connects its parts:
+-- THE COPY: a server-controlled entity in the world. This module runs its think loop and
+-- connects its parts:
 --   Brain       decides which state it is in (pure rules, unit tested)
 --   Escalation  how angry it is; set by mission progress, forward only
---   Senses      what it can see, and where it may appear
---   Navigator   walking along the floor
---   Body        the placeholder model
+--   Senses      line of sight, the map's points, where it may appear   (Vision: the numbers)
+--   Attention   which player it concentrates on                        (Targeting: the rules)
+--   Listener    the noises it heard and scripted summons               (Hearing: the rules)
+--   Memory      the last known position and how sure it still is
+--   Arrival     whether and where it comes into the world
+--   Walker      its routes and its legs       (Planner, Patrol: the plans; Navigator: paths)
+--   Presence    the one model, its state attributes, the dread value   (Body: the model)
+--   Reactions   sounds, effects and notifications
 --
--- There is exactly one entity for the whole server: one model, created once, moved in and
--- out of the world. Other systems talk to it only through noise (NoiseService) and the few
--- functions at the bottom of this file. Clients never control it; they see the replicated
--- model and a per-player "dread" value that drives screen interference.
+-- There is exactly one entity for the whole server. Other systems talk to it only through
+-- noise (NoiseService) and the few functions at the bottom of this file. Clients never
+-- control it; they see the replicated model, its state attribute and a per-player "dread"
+-- value. It is never omniscient: it knows only what it sees (line of sight, field of view,
+-- light) and an approximate place for what it hears.
 --
--- Every appearance, refusal to appear and stage change is logged as [TLS:THE_COPY].
+-- Every state change, appearance, refusal to appear, stage change, target change, heard
+-- noise and search plan is logged as [TLS:THE_COPY].
 
-local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local CopyConfig = require(ReplicatedStorage.Config.CopyConfig)
 local GameState = require(ReplicatedStorage.Shared.GameState)
 local Logger = require(ReplicatedStorage.Shared.Logger)
-local NetService = require(script.Parent.Parent.Services.NetService)
 local NoiseService = require(script.Parent.Parent.Services.NoiseService)
 local SessionService = require(script.Parent.Parent.Services.SessionService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
-local FacilityLights = require(script.Parent.FacilityLights)
-local SpawnSystem = require(script.Parent.SpawnSystem)
-local Body = require(script.Body)
+local Arrival = require(script.Arrival)
+local Attention = require(script.Attention)
 local Brain = require(script.Brain)
 local Escalation = require(script.Escalation)
+local Listener = require(script.Listener)
+local Memory = require(script.Memory)
 local Navigator = require(script.Navigator)
+local Presence = require(script.Presence)
+local Reactions = require(script.Reactions)
 local Senses = require(script.Senses)
+local Walker = require(script.Walker)
 
 local THINK_INTERVAL = 0.1
-local REPATH_INTERVAL = 0.6
-local SEARCH_RADIUS = 70
--- A refused appearance is retried every think; say why at most this often.
-local FAILURE_LOG_INTERVAL = 15
-local DREAD_ATTRIBUTE = GameState.PlayerAttribute.Dread
 
 local log = Logger.new("THE_COPY")
 
 local CopyAI = {}
 
 local brain = Brain.new(CopyConfig)
-local model: Model = Body.build()
-local nav = Navigator.new(Vector3.zero)
+local nav = Presence.nav
 local escalation = Escalation.new()
 local settings: CopyConfig.StageSettings = CopyConfig.Stages.Dormant
+local memory: Memory.Memory<Vector3> = Memory.new()
 
 local running = true
 local lastEncounter = os.clock()
-local lastFailureLog = 0
-
-local pendingNoise: Vector3? = nil
-local appearPoint: Vector3? = nil
-local target: Player? = nil
-local lastKnown: Vector3? = nil
-local searchQueue: { Vector3 } = {}
-local closeTime = 0
-local nextRepath = 0
 local thinkTimer = 0
 
-local function eye(): Vector3
-	return nav.position + Vector3.new(0, Body.EYE_HEIGHT, 0)
+local appearPoint: Vector3? = nil
+local appearFacing: Vector3? = nil
+-- A scripted sighting: it turns toward the closest player like a staged scare should.
+local scripted = false
+local living: { Senses.Living } = {}
+
+local function active(): boolean
+	return running and CopyConfig.Enabled and SessionService.isPlaying()
 end
 
-local function roomAt(position: Vector3): string
-	return WorldService.zoneAt(position + Vector3.new(0, 3, 0)) or "an unknown place"
-end
-
-local function place()
-	model:PivotTo(CFrame.lookAt(nav.position, nav.position + nav.facing))
-end
-
-local function appearAt(point: Vector3)
-	nav = Navigator.new(point)
-	Body.setTransparency(model, 0)
-	place()
-	model.Parent = WorldService.runtimeFolder()
-	log:info(`Spawn successful: {roomAt(point)}`)
-end
-
-local function hide()
-	model.Parent = nil
-	Navigator.stop(nav)
-	target = nil
-	lastKnown = nil
-	appearPoint = nil
-	lastEncounter = os.clock()
-end
-
-local function walkTo(point: Vector3)
-	Navigator.goTo(nav, Senses.ground(point), { model })
-end
-
-local function setDread(player: Player, value: number)
-	local rounded = math.floor(value * 10 + 0.5) / 10
-	if player:GetAttribute(DREAD_ATTRIBUTE) ~= rounded then
-		player:SetAttribute(DREAD_ATTRIBUTE, rounded)
-	end
-end
-
-local function updateDread()
-	local present = brain.state ~= "Dormant"
-	for _, player in Players:GetPlayers() do
-		local dread = 0
-		local character = player.Character
-		local root = character and character:FindFirstChild("HumanoidRootPart")
-		if present and root and root:IsA("BasePart") then
-			local distance = (root.Position - nav.position).Magnitude
-			dread = math.clamp(1 - distance / CopyConfig.DreadDistance, 0, 1)
-			if brain.state == "Pursuing" and player == target then
-				dread = math.max(dread, 0.6)
-			end
-		end
-		setDread(player, dread)
-	end
-end
-
--- Places to check around the last known position: the position itself, then the nearest
--- observation points.
-local function buildSearchQueue(origin: Vector3): { Vector3 }
-	local points = Senses.vantagePoints()
-	table.sort(points, function(a, b)
-		return (a - origin).Magnitude < (b - origin).Magnitude
-	end)
-	local queue = { origin }
-	for _, point in points do
-		if #queue < 4 and (point - origin).Magnitude <= SEARCH_RADIUS then
-			table.insert(queue, point)
-		end
-	end
-	return queue
-end
-
-local function nextSearchPoint()
-	local point = table.remove(searchQueue, 1)
-	if point then
-		walkTo(point)
-	end
-end
-
-local function catch(player: Player)
-	log:info(`{player.Name} was caught`)
-	NetService.fire("Effect", player, "Blackout", 3)
-	NetService.fire("Sound", player, "Caught")
-	NetService.fireAll("Notify", `{player.DisplayName} was taken.`, "warning")
-	task.delay(0.8, function()
-		if player.Parent == Players then
-			SpawnSystem.placeInRoom(player, CopyConfig.CaughtReturnRoom)
-		end
-	end)
+-- States in which nothing it hears can pull it away.
+local function isBusy(): boolean
+	local state = brain.state
+	return Brain.isChasing(brain) or state == "Stalking" or state == "Disappearing"
 end
 
 local function onEnter(state: Brain.State, previous: Brain.State, seen: Senses.Seen?)
 	log:info(`State: {previous} -> {state}`)
+	Presence.publishState(state)
 
 	if previous == "Dormant" then
-		appearAt(appearPoint or nav.position)
+		local point = appearPoint or nav.position
+		Presence.appearAt(point, appearFacing)
+		log:info(`Spawn successful: {Presence.roomAt(point)}`)
+		Reactions.appeared(point, false)
 	end
 
 	if state == "Dormant" then
-		hide()
-	elseif state == "Observing" or state == "Disappearing" then
+		Presence.hide()
+		Attention.release()
+		Listener.reset()
+		Memory.forget(memory)
+		Walker.clear()
+		appearPoint = nil
+		scripted = false
+		lastEncounter = os.clock()
+	elseif state == "Observing" then
 		Navigator.stop(nav)
+	elseif state == "Disappearing" then
+		Navigator.stop(nav)
+		Reactions.vanishing(nav.position)
+	elseif state == "Patrolling" then
+		Walker.startPatrol(settings.PatrolPoints)
 	elseif state == "Investigating" then
-		walkTo(lastKnown or nav.position)
+		Walker.goTo(memory.position)
 	elseif state == "Searching" then
-		searchQueue = buildSearchQueue(lastKnown or nav.position)
-		nextSearchPoint()
+		Walker.startSearch(memory, settings.SearchPoints)
+		Reactions.searching(nav.position)
 	elseif state == "Pursuing" then
+		-- A chase that simply goes on (after a missed attack, or sight regained at once)
+		-- has no warning: it keeps walking.
+		if brain.warningTime > 0 then
+			Navigator.stop(nav)
+			Reactions.pursuitWarning(
+				nav.position,
+				if seen then seen.player else nil,
+				brain.warningTime
+			)
+		end
+	elseif state == "Attacking" then
 		Navigator.stop(nav)
-		closeTime = 0
-		nextRepath = 0
-		target = if seen then seen.player else nil
-		if seen then
-			lastKnown = seen.root.Position
-			NetService.fire("Notify", seen.player, "IT HAS SEEN YOU.", "warning")
-		end
-		NetService.fireAll("Effect", "Interference", CopyConfig.ChaseWarningTime)
-		NetService.fireAll("Sound", "CopyAlert", nav.position)
-		local room = WorldService.zoneAt(nav.position + Vector3.new(0, 3, 0))
-		if room then
-			FacilityLights.flickerRooms({ room }, CopyConfig.ChaseWarningTime)
-		end
+		Reactions.attack(nav.position)
+	elseif state == "LostTarget" then
+		Reactions.lostTarget(nav.position)
+		Walker.goTo(memory.position)
+	elseif state == "Returning" then
+		Walker.leave(living)
 	end
-end
-
--- Finds a fair place to appear near `interest`, logging the request and any refusal.
-local function requestAppearance(interest: Vector3, reason: string): Vector3?
-	local point = Senses.pickAppearPoint(interest)
-	local now = os.clock()
-	if point then
-		log:info(`Spawn requested ({reason}) near {roomAt(interest)}`)
-	elseif now - lastFailureLog >= FAILURE_LOG_INTERVAL then
-		lastFailureLog = now
-		log:info(
-			`Spawn failed: {reason} near {roomAt(interest)}, but no observation point is both `
-				.. `out of sight and at least {CopyConfig.MinAppearDistance} studs from every player. `
-				.. "It will keep trying."
-		)
-	end
-	return point
 end
 
 local function think(dt: number)
-	local playing = running and CopyConfig.Enabled and SessionService.isPlaying()
-	local living: { { player: Player, root: BasePart } } = {}
-	if playing then
-		living = Senses.livingPlayers()
-	end
+	local playing = active()
+	living = if playing then Senses.livingPlayers() else {}
 	local present = brain.state ~= "Dormant"
 
-	-- Sight: keep the current target if it is still visible, otherwise the closest one.
+	-- Sight and the choice of target. It turns to whoever it is watching when standing.
 	local seen: Senses.Seen? = nil
+	local targetChanged = false
 	if present and playing then
-		for _, candidate in Senses.visiblePlayers(eye(), model, settings.DetectionScale) do
-			if candidate.player == target then
-				seen = candidate
-				break
-			elseif not seen or candidate.distance < seen.distance then
-				seen = candidate
-			end
-		end
+		seen, targetChanged = Attention.update(
+			dt,
+			Presence.eye(),
+			nav.facing,
+			Presence.model,
+			settings.DetectionScale,
+			living
+		)
+	else
+		Attention.rest(dt)
 	end
 	if seen then
-		lastKnown = seen.root.Position
-		Navigator.face(nav, seen.root.Position)
-		-- If the one it was chasing is out of sight, it turns on whoever it can see.
-		if brain.state == "Pursuing" and seen.player ~= target then
-			target = seen.player
-			closeTime = 0
+		Memory.remember(memory, seen.root.Position, 1)
+		if not Navigator.isBusy(nav) then
+			Navigator.face(nav, seen.root.Position)
+		end
+		if targetChanged and Brain.isChasing(brain) then
+			Reactions.noticed(seen.player)
 		end
 	end
 
@@ -245,48 +168,33 @@ local function think(dt: number)
 		end
 	end
 
-	-- Hearing.
-	local noise = pendingNoise
-	pendingNoise = nil
-	local heard = noise ~= nil and brain.state ~= "Pursuing"
-	if heard and noise then
-		lastKnown = noise
+	-- Hearing: an approximate place, and never while it is busy with a player.
+	if Listener.summonExpired() then
+		log:info("Summon dropped: it found no fair way to answer it in time")
 	end
-
-	-- Coming out needs a fair place to appear.
+	local heard = if playing then Listener.take(not isBusy()) else nil
 	local interval = settings.VisitInterval
 	local wake = interval ~= nil and os.clock() - lastEncounter >= interval
 	if not present then
-		appearPoint = nil
-		local interest = noise or nearestPosition
-		if interest and (heard or wake) and brain.cooldown <= 0 and #living > 0 then
-			appearPoint =
-				requestAppearance(interest, if heard then "it heard something" else "a visit")
+		appearPoint, appearFacing = nil, nil
+		if #living > 0 then
+			appearPoint, appearFacing =
+				Arrival.consider(brain, memory, heard, wake, nearestPosition)
 		end
-	end
-
-	-- Catching: the target has to stay within reach, in view, for a moment.
-	local caught = false
-	if
-		brain.state == "Pursuing"
-		and not Brain.isWarning(brain)
-		and seen
-		and seen.player == target
-	then
-		closeTime = if seen.distance <= CopyConfig.CatchDistance then closeTime + dt else 0
-		caught = closeTime >= CopyConfig.CatchTime
-	else
-		closeTime = 0
-	end
-	if caught and target then
-		catch(target)
+	elseif heard then
+		Memory.remember(memory, heard.estimate, Arrival.certaintyOf(heard))
+		Attention.noteNoise(heard.source, living)
+		Arrival.logHeard(heard)
+		if heard.name == Listener.SUMMON then
+			Listener.clearSummon()
+		end
 	end
 
 	local previous: Brain.State = brain.state
 	local state: Brain.State = Brain.update(brain, dt, {
 		playersPresent = #living > 0,
 		canAppear = appearPoint ~= nil,
-		noise = heard,
+		noise = heard ~= nil and (present or appearPoint ~= nil),
 		wakeRequested = wake,
 		seesTarget = seen ~= nil,
 		targetDistance = if seen then seen.distance else math.huge,
@@ -294,42 +202,37 @@ local function think(dt: number)
 		arrived = Navigator.hasArrived(nav),
 		pathFailed = nav.failed,
 		pursuitArmed = settings.Pursues,
-		caught = caught,
+		patrolArmed = settings.Patrols,
+		stalkArmed = settings.Stalks,
+		detectionRate = if seen then seen.rate else 1,
+		inReach = seen ~= nil and seen.distance <= (if brain.state == "Attacking"
+			then CopyConfig.AttackReach
+			else CopyConfig.CatchDistance),
+		routeDone = previous == "Patrolling" and Walker.isDone(),
+		searchDone = previous == "Searching" and (Memory.isSpent(memory) or Walker.isDone()),
 	})
+
+	if brain.caught and seen then
+		log:info(`{seen.player.Name} was caught`)
+		Reactions.caught(seen.player)
+		Attention.markCaught(seen.player)
+	end
 	if state ~= previous then
 		onEnter(state, previous, seen)
+	elseif state == "Investigating" and heard then
+		-- Something louder than what it was walking to: it changes course.
+		Walker.goTo(heard.estimate)
 	end
-
 	if state == "Searching" then
-		if Navigator.hasArrived(nav) or nav.failed then
-			nextSearchPoint()
-		end
-	elseif state == "Pursuing" and not Brain.isWarning(brain) then
-		local now = os.clock()
-		if lastKnown and now >= nextRepath then
-			nextRepath = now + REPATH_INTERVAL
-			walkTo(lastKnown)
-		end
-	elseif state == "Observing" and nearestPosition then
-		Navigator.face(nav, nearestPosition)
-	elseif state == "Disappearing" then
-		Body.setTransparency(model, math.clamp(brain.stateTime / CopyConfig.FadeTime, 0, 1))
+		-- Its certainty fades only while it searches; at 0 the search is over.
+		Memory.decay(memory, dt, settings.MemoryTime)
 	end
 
-	updateDread()
-end
-
-local function move(dt: number)
-	local state = brain.state
-	if state == "Dormant" then
-		return
-	end
-	if state == "Investigating" or state == "Searching" then
-		Navigator.step(nav, dt, CopyConfig.WalkSpeed)
-	elseif state == "Pursuing" and not Brain.isWarning(brain) then
-		Navigator.step(nav, dt, settings.PursueSpeed)
-	end
-	place()
+	Walker.act(brain, memory, seen, if scripted then nearestPosition else nil)
+	Presence.updateDread(
+		state ~= "Dormant",
+		if Brain.isChasing(brain) then Attention.target() else nil
+	)
 end
 
 -- Raises the escalation stage to `stage` ("Aware", "Hunting", "Hostile", "FinalPursuit").
@@ -344,11 +247,15 @@ function CopyAI.setStage(stage: string)
 	end
 	local current = Escalation.stage(escalation)
 	settings = CopyConfig.Stages[current]
-	Brain.tune(
-		brain,
-		{ LoseSightTime = settings.LoseSightTime, EncounterCooldown = settings.Cooldown }
-	)
+	Brain.tune(brain, {
+		LoseSightTime = settings.LoseSightTime,
+		EncounterCooldown = settings.Cooldown,
+		SearchDuration = settings.MemoryTime,
+	})
 	ReplicatedStorage:SetAttribute(GameState.COPY_STAGE_ATTRIBUTE, current)
+	if current == "FinalPursuit" then
+		Reactions.finalPursuit()
+	end
 
 	-- Each escalation is felt soon: no leftover quiet time, and the next visit is near.
 	Brain.clearCooldown(brain)
@@ -371,10 +278,19 @@ function CopyAI.shutdown()
 	running = false
 end
 
+function CopyAI.getState(): Brain.State
+	return brain.state
+end
+
+-- True while it is in the world, in any state.
+function CopyAI.isOut(): boolean
+	return brain.state ~= "Dormant"
+end
+
 -- Scripted sighting: it stands at `position` watching, then vanishes after `seconds` or as
 -- soon as a player comes within `fleeDistance`. Returns false if it is already out.
 function CopyAI.stageSighting(position: Vector3, seconds: number, fleeDistance: number): boolean
-	log:info(`Spawn requested (scripted sighting) in {roomAt(position)}`)
+	log:info(`Spawn requested (scripted sighting) in {Presence.roomAt(position)}`)
 	if not CopyConfig.Enabled then
 		log:info("Spawn failed: CopyConfig.Enabled is false")
 		return false
@@ -382,28 +298,44 @@ function CopyAI.stageSighting(position: Vector3, seconds: number, fleeDistance: 
 		log:info(`Spawn failed: it is already in the world ({brain.state})`)
 		return false
 	end
-	appearAt(Senses.ground(position))
+	local point = Senses.ground(position)
+	Presence.appearAt(point, nil)
+	scripted = true
 	Brain.stage(brain, seconds, fleeDistance)
+	Presence.publishState(brain.state)
+	log:info(`Spawn successful: {Presence.roomAt(point)}`)
 	log:info("State: Dormant -> Observing (scripted sighting)")
-	NetService.fireAll("Sound", "CopyPresence", position)
+	Reactions.appeared(point, true)
 	return true
 end
 
-function CopyAI.getState(): Brain.State
-	return brain.state
+-- Scripted encounter: it comes to investigate `position` as if it had heard something very
+-- loud there, skipping the quiet time after its last encounter. It still appears only at a
+-- fair point (out of sight, far from every player) and keeps trying for a while if there
+-- is none. If it is already out it changes course as soon as it can be interrupted; a
+-- chase is never interrupted. Returns whether the request was accepted.
+function CopyAI.summon(position: Vector3, reason: string): boolean
+	if not active() then
+		log:info(`Summon refused ({reason}): the mission is not running or it is disabled`)
+		return false
+	elseif Brain.isChasing(brain) then
+		log:info(`Summon refused ({reason}): it is busy ({brain.state})`)
+		return false
+	end
+	log:info(`Summon accepted ({reason}): {Presence.roomAt(position)}`)
+	Listener.summon(Senses.ground(position), reason)
+	return true
 end
 
 function CopyAI.Start(_self: any)
 	ReplicatedStorage:SetAttribute(GameState.COPY_STAGE_ATTRIBUTE, Escalation.stage(escalation))
+	Presence.publishState(brain.state)
+	Attention.watchPlayers()
 
-	NoiseService.heard:Connect(function(position: Vector3, radius: number)
-		-- While it is away it is not in the world: only something loud enough for the
-		-- current stage draws it in. Once out, it hears whatever reaches where it stands.
-		local audible = if brain.state == "Dormant"
-			then radius >= settings.WakeNoiseRadius
-			else (position - nav.position).Magnitude <= radius
-		if audible then
-			pendingNoise = position
+	NoiseService.heard:Connect(function(position: Vector3, radius: number, name: string)
+		if active() then
+			local out = brain.state ~= "Dormant"
+			Listener.offer(position, radius, name, out, isBusy(), nav.position, settings)
 		end
 	end)
 
@@ -427,7 +359,7 @@ function CopyAI.Start(_self: any)
 			think(thinkTimer)
 			thinkTimer = 0
 		end
-		move(dt)
+		Walker.move(brain, dt, settings.PursueSpeed)
 	end)
 end
 
