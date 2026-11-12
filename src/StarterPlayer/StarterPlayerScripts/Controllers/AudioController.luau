@@ -1,74 +1,101 @@
 --!strict
--- Plays the sounds named in Config/AudioConfig. A cue whose asset id is empty is skipped
--- without any warning, so the game runs correctly before audio assets have been chosen.
+-- One-shot sounds: the cues the server asks for through the `Sound` event, and the ones
+-- other controllers play locally. Everything is defined in Config/AudioConfig; a cue with
+-- no asset is skipped silently.
+--
+-- Guards against sound bugs: each cue has a cooldown, the same cue is never stacked more
+-- than a few times, and the total number of one-shots playing at once is capped.
+-- Ambience, emitters and THE COPY's loops live in AmbienceController and
+-- CopyAudioController.
 
-local Debris = game:GetService("Debris")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Config = ReplicatedStorage:WaitForChild("Config")
-local AudioConfig = require(Config:WaitForChild("AudioConfig"))
-local GameState = require(Shared:WaitForChild("GameState"))
+local Logger = require(Shared:WaitForChild("Logger"))
 local Net = require(Shared:WaitForChild("Net"))
-local SessionController = require(script.Parent:WaitForChild("SessionController"))
+local Sounds = require(script.Parent.Parent:WaitForChild("Audio"):WaitForChild("Sounds"))
+
+local MAX_ONE_SHOTS = 14
+local MAX_SAME_CUE = 3
+-- A sound that never reports Ended (failed to load) is cleaned up after this long.
+local MAX_LIFETIME = 30
+
+local log = Logger.new("Audio")
 
 local AudioController = {}
 
-local ambient: { Sound } = {}
-
-local function newSound(cue: AudioConfig.Cue, parent: Instance): Sound
-	local sound = Instance.new("Sound")
-	sound.SoundId = cue.id
-	sound.Volume = cue.volume
-	sound.Looped = cue.looped == true
-	if cue.rollOff then
-		sound.RollOffMode = Enum.RollOffMode.InverseTapered
-		sound.RollOffMaxDistance = cue.rollOff
-	end
-	sound.Parent = parent
-	return sound
-end
+local lastPlayed: { [string]: number } = {}
+local playing: { [string]: number } = {}
+local total = 0
+local reportedMissing: { [string]: boolean } = {}
 
 -- Plays a cue: at a point in the world when a position is given, otherwise everywhere.
-function AudioController.play(name: string, position: Vector3?)
-	local cue = AudioConfig.Cues[name]
-	if not cue or cue.id == "" then
-		return
+-- Returns whether a sound was started.
+function AudioController.play(name: string, position: Vector3?): boolean
+	local cue = Sounds.cue(name)
+	if not cue then
+		if not reportedMissing[name] then
+			reportedMissing[name] = true
+			log:warn(`Unknown cue "{name}"`)
+		end
+		return false
+	end
+	if cue.id == "" then
+		if not reportedMissing[name] then
+			reportedMissing[name] = true
+			log:info(`Cue "{name}" has no audio asset yet (see ASSET_MANIFEST.md); skipped`)
+		end
+		return false
 	end
 
-	if position then
-		-- A sound needs a part to be positional; the holder removes itself afterwards.
-		local holder = Instance.new("Attachment")
-		holder.WorldPosition = position
-		holder.Parent = Workspace.Terrain
-		newSound(cue, holder):Play()
-		Debris:AddItem(holder, 20)
-	else
-		local sound = newSound(cue, SoundService)
-		sound.Ended:Once(function()
-			sound:Destroy()
-		end)
-		sound:Play()
+	local now = os.clock()
+	if cue.cooldown and now - (lastPlayed[name] or -math.huge) < cue.cooldown then
+		return false
 	end
-end
+	if total >= MAX_ONE_SHOTS or (playing[name] or 0) >= MAX_SAME_CUE then
+		return false
+	end
 
-local function setAmbient(playing: boolean)
-	if playing and #ambient == 0 then
-		for _, cue in AudioConfig.Ambient do
-			if cue.id ~= "" then
-				local sound = newSound(cue, SoundService)
-				sound:Play()
-				table.insert(ambient, sound)
-			end
-		end
-	elseif not playing then
-		for _, sound in ambient do
-			sound:Destroy()
-		end
-		table.clear(ambient)
+	-- A positional sound needs something in the world to sit on; the holder goes with it.
+	local holder: Instance? = nil
+	local parent: Instance = SoundService
+	if position and cue.max then
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "TLS_Sound"
+		attachment.WorldPosition = position
+		attachment.Parent = Workspace.Terrain
+		holder, parent = attachment, attachment
 	end
+	local sound = Sounds.create(name, parent)
+	if not sound then
+		if holder then
+			holder:Destroy()
+		end
+		return false
+	end
+
+	lastPlayed[name] = now
+	playing[name] = (playing[name] or 0) + 1
+	total += 1
+	local finished = false
+	local function cleanup()
+		if finished then
+			return
+		end
+		finished = true
+		playing[name] = math.max(0, (playing[name] or 1) - 1)
+		total = math.max(0, total - 1)
+		sound:Destroy()
+		if holder then
+			holder:Destroy()
+		end
+	end
+	sound.Ended:Once(cleanup)
+	task.delay(MAX_LIFETIME, cleanup)
+	sound:Play()
+	return true
 end
 
 function AudioController.Start(_self: any)
@@ -77,12 +104,6 @@ function AudioController.Start(_self: any)
 			AudioController.play(name, if typeof(position) == "Vector3" then position else nil)
 		end
 	end)
-
-	local function onPhase(phase: GameState.Phase)
-		setAmbient(phase == GameState.Phase.Playing or phase == GameState.Phase.Finale)
-	end
-	SessionController.phaseChanged:Connect(onPhase)
-	onPhase(SessionController.getPhase())
 end
 
 return AudioController

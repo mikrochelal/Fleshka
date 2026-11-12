@@ -1,6 +1,8 @@
 --!strict
 -- Document viewer: a sheet of paper over a dimmed screen, with title, date, text and a
--- close control. Opened by the server when the player reads a document in the world.
+-- close control. Opened by the server when the player reads a document in the world. The
+-- server sends text references; the words are rendered here in the player's language and
+-- re-rendered if the language changes while the document is open.
 
 local ContextActionService = game:GetService("ContextActionService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -8,9 +10,10 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Net = require(Shared:WaitForChild("Net"))
 local Theme = require(script.Parent.Parent:WaitForChild("UI"):WaitForChild("Theme"))
+local LocalizationController = require(script.Parent:WaitForChild("LocalizationController"))
 
 local CLOSE_ACTION = "TLS_CloseDocument"
-local MAX_BODY_LENGTH = 6000
+local MAX_REFERENCE_LENGTH = 2000
 
 local DocumentController = {}
 
@@ -21,6 +24,18 @@ local titleLabel: TextLabel
 local dateLabel: TextLabel
 local bodyLabel: TextLabel
 local scroller: ScrollingFrame
+local closeButton: TextButton
+-- The references of the document on screen, kept so it can be re-rendered.
+local shown: { title: string, date: string, body: string }? = nil
+
+local function render()
+	closeButton.Text = LocalizationController.t("UI_CLOSE")
+	if shown then
+		titleLabel.Text = LocalizationController.render(shown.title)
+		dateLabel.Text = LocalizationController.render(shown.date)
+		bodyLabel.Text = LocalizationController.render(shown.body)
+	end
+end
 
 local function close()
 	if not screen.Enabled then
@@ -35,9 +50,8 @@ local function close()
 end
 
 local function open(title: string, date: string, body: string)
-	titleLabel.Text = title
-	dateLabel.Text = date
-	bodyLabel.Text = body
+	shown = { title = title, date = date, body = body }
+	render()
 	scroller.CanvasPosition = Vector2.zero
 
 	screen.Enabled = true
@@ -79,9 +93,17 @@ local function build()
 	}, screen)
 	Theme.make("UISizeConstraint", { MaxSize = Vector2.new(620, 760) }, sheet)
 	Theme.padding(sheet, 26, 22)
+	-- A vertical list: a long title pushes the date and the text down instead of
+	-- overlapping them.
+	Theme.make("UIListLayout", {
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Padding = UDim.new(0, 10),
+		HorizontalAlignment = Enum.HorizontalAlignment.Right,
+	}, sheet)
 
 	titleLabel = Theme.make("TextLabel", {
 		Name = "Title",
+		LayoutOrder = 1,
 		Size = UDim2.fromScale(1, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundTransparency = 1,
@@ -94,7 +116,7 @@ local function build()
 	}, sheet)
 	dateLabel = Theme.make("TextLabel", {
 		Name = "Date",
-		Position = UDim2.fromOffset(0, 56),
+		LayoutOrder = 2,
 		Size = UDim2.new(1, 0, 0, 18),
 		BackgroundTransparency = 1,
 		Font = Theme.Font.Mono,
@@ -106,7 +128,7 @@ local function build()
 	}, sheet)
 	Theme.make("Frame", {
 		Name = "Rule",
-		Position = UDim2.fromOffset(0, 82),
+		LayoutOrder = 3,
 		Size = UDim2.new(1, 0, 0, 1),
 		BackgroundColor3 = Theme.Color.Ink,
 		BackgroundTransparency = 0.6,
@@ -115,8 +137,9 @@ local function build()
 
 	scroller = Theme.make("ScrollingFrame", {
 		Name = "Body",
-		Position = UDim2.fromOffset(0, 94),
-		Size = UDim2.new(1, 0, 1, -160),
+		LayoutOrder = 4,
+		-- The rest of the sheet: title (up to two lines), date, rule and button are fixed.
+		Size = UDim2.new(1, 0, 1, -175),
 		BackgroundTransparency = 1,
 		BorderSizePixel = 0,
 		ScrollBarThickness = 4,
@@ -139,17 +162,16 @@ local function build()
 		Text = "",
 	}, scroller)
 
-	local closeButton: TextButton = Theme.make("TextButton", {
+	closeButton = Theme.make("TextButton", {
 		Name = "Close",
-		AnchorPoint = Vector2.new(1, 1),
-		Position = UDim2.fromScale(1, 1),
-		Size = UDim2.fromOffset(150, 46),
+		LayoutOrder = 5,
+		Size = UDim2.fromOffset(190, 46),
 		BackgroundColor3 = Theme.Color.Ink,
 		AutoButtonColor = true,
 		Font = Theme.Font.Medium,
 		TextSize = 15,
 		TextColor3 = Theme.Color.Paper,
-		Text = "CLOSE  [X]",
+		Text = "",
 		-- Frees the mouse when the camera is in first person.
 		Modal = true,
 	}, sheet)
@@ -160,11 +182,13 @@ function DocumentController.Start(_self: any)
 	build()
 
 	Net.waitForServerEvent("ShowDocument").OnClientEvent
-		:Connect(function(title: any, date: any, body: any)
+		:Connect(function(_id: any, title: any, date: any, body: any)
 			if type(title) == "string" and type(date) == "string" and type(body) == "string" then
-				open(title, date, string.sub(body, 1, MAX_BODY_LENGTH))
+				open(title, date, string.sub(body, 1, MAX_REFERENCE_LENGTH))
 			end
 		end)
+	LocalizationController.changed:Connect(render)
+	render()
 end
 
 return DocumentController
