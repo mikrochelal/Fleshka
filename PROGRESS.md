@@ -9,68 +9,100 @@ Status vocabulary: **Implemented** (code written) · **Tested** (verified at run
 analysis and the unit tests in `tests/`. Static checks do not prove runtime behaviour in
 Roblox; that is recorded in `TESTING_CHECKLIST.md`.
 
-_Last updated: 2026-11-12_
+_Last updated: 2026-11-12 — version 0.3.0 (playable slice)_
+
+## Summary
+
+| Area                         | State |
+| ---------------------------- | ----- |
+| Project foundation, tooling  | Tested in Studio |
+| Core systems (net, session, players, interaction) | Partially tested in Studio |
+| Draft map generator (layout v3) | Tested in Studio by the owner (generation, top view, ceilings, lighting preset) |
+| Playable slice v0.3.0 (everything in the next section) | Implemented; static checks and unit tests pass; **Not tested in Studio** |
+| Main menu, lobby, party system, settings | Not implemented |
+| Frequency and security-code puzzles | Not implemented |
+| Door system (doors are walk-through) | Not implemented |
+| Audio assets                 | Blocked — no verified assets chosen; every cue id is empty |
+
+## Playable slice — version 0.3.0
+
+None of this has run inside Roblox yet. "Unit tested" means the pure logic was executed with
+the standalone Luau CLI.
+
+| System | Files | Status |
+| ------ | ----- | ------ |
+| Map lookup by tags, room tracking, runtime folder | `Services/WorldService` | Implemented; **Not tested** |
+| Player placement in the elevator (floor found by raycast, slots for 4 players, respawn) | `Systems/SpawnSystem` | Implemented; **Not tested** |
+| Walk / sprint / stamina, server-owned | `Systems/MovementSystem`, `Config/PlayerConfig` | Implemented; **Not tested** |
+| Flashlight: real SpotLight, battery drain, low-battery flicker, slow recharge to 25%, battery packs | `Systems/FlashlightSystem`, `Config/FlashlightConfig` | Implemented; **Not tested** |
+| Interaction: prompts on Parts, Attachments and Models; enable/disable and text through attributes | `Systems/InteractionSystem` | Implemented; earlier version partially tested in Studio; new version **Not tested** |
+| Runtime gameplay objects (documents, radio, batteries, elevator panel; reuse of map placeholders) | `Systems/WorldProps`, `Data/PropList` | Implemented; placements unit tested against the map layout (inside rooms, clear of doorways, map props and the spawn point); creation **Not tested** |
+| Objectives: six, strictly ordered, server-owned, replicated by attribute | `Services/ObjectiveService`, `Config/ObjectiveConfig` | Implemented; **Not tested** |
+| Facility lights: circuits and flicker | `Systems/FacilityLights` | Implemented; **Not tested** |
+| Power Restoration puzzle: three breakers in a per-session order from the memo, main lever, trip on a wrong order | `Systems/PowerSystem`, `Config/PowerConfig` | Implemented; data unit tested; **Not tested** |
+| Documents: three, sent by the server on reading; memo text generated per session | `Systems/DocumentSystem`, `Data/Documents` | Implemented; content unit tested; **Not tested** |
+| Radio transmission with subtitles, pauses, light flicker, interference | `Systems/RadioSystem`, `Data/Transmissions` | Implemented; script unit tested; **Not tested** |
+| Scripted corridor sighting | `Systems/HorrorDirector` | Implemented; **Not tested** |
+| THE COPY: six-state brain | `Systems/CopyAI/Brain` | Implemented; **unit tested** (45 checks: waking, fairness, warning, losing sight, time limit, catch, cooldowns) |
+| THE COPY: senses, pathfinding walker, placeholder body, catch and return | `Systems/CopyAI/*` | Implemented; **Not tested** — pathfinding and sight need Studio |
+| Mission script: auto-start, objective wiring, console, elevator, ending | `Systems/SliceDirector` | Implemented; **Not tested** |
+| HUD: objectives, stamina, battery, touch buttons | `Controllers/HudController`, `InputController` | Implemented; **Not tested** |
+| Notifications and subtitles | `Controllers/MessageController` | Implemented; **Not tested** |
+| Document viewer | `Controllers/DocumentController` | Implemented; **Not tested** |
+| Interference, blackout, title card, completion card | `Controllers/EffectsController` | Implemented; **Not tested** |
+| Audio architecture (named cues, positional playback, ambient loops) | `Controllers/AudioController`, `Config/AudioConfig` | Implemented; silent by design until assets are chosen; **Not tested** |
+
+### Known limitations of the slice
+
+- **No sound.** Every audio cue is defined but has no asset id. Footsteps are Roblox's
+  default character sounds. The radio and the entity rely on subtitles, lights and screen
+  interference.
+- **Doors do not work yet.** Door panels are half-transparent and walk-through. The
+  red-framed code door is passable.
+- **The flashlight follows the head, not the camera pitch.** Looking up or down in first
+  person does not tilt the beam.
+- **THE COPY is a placeholder figure that glides** (it is moved directly along the path
+  rather than animated).
+- **Before power is restored** the corridors, laboratory and communication center are dark
+  by design; only the entrance and the red emergency lamps are lit. After power returns the
+  emergency lamps go out, which leaves the service tunnel and the airlock dark.
+- **No menu or lobby.** The session starts by itself when the first player is ready
+  (`GameConfig.AutoStartSession`). Everyone on the server shares one mission.
+- **Being caught** returns the player to the communication center; there is no death.
+- **Session restart** needs Stop and Play again.
+- **Mobile** layout and touch buttons exist but have never been seen on a device.
 
 ## Phase 1 — Project foundation
 
 | Item                                         | Status                                             |
 | -------------------------------------------- | -------------------------------------------------- |
 | Tooling pinned in `rokit.toml` (Rojo 7.7.1)  | Implemented; versions installed and run on Linux   |
-| `default.project.json` (code only)           | **Tested** — `rojo build` output contains no Workspace; synced into the owner's Studio |
+| `default.project.json` (code only)           | **Tested** — synced into the owner's Studio        |
 | Workspace safety guard in `scripts/check.sh` | Implemented; runs on every check                   |
-| `Shared/Loader`, `Logger`                    | **Tested** — both startup lines seen in Studio Output (owner, 2026-11-12) |
-| Server and client bootstraps                 | **Tested** — same evidence                         |
-| Workspace untouched by re-sync, no duplicates on reconnect | **Not tested** (checklist 1.3, 1.5)  |
+| `Shared/Loader`, `Logger`, bootstraps        | **Tested** — startup lines seen in Studio Output   |
 | Roblox Studio MCP                            | **Blocked** — not reachable from the cloud development environment |
-| Documentation set                            | Done                                               |
 
 ## Phase 2 — Core systems
 
 | Item                                                        | Status                                         |
 | ----------------------------------------------------------- | ---------------------------------------------- |
-| `Shared/GameState` (phases, transitions, parsing)           | Implemented; unit tested (Luau CLI)            |
-| `Shared/RateLimiter` (token bucket)                         | Implemented; unit tested (Luau CLI)            |
-| `Shared/Signal` (event system)                              | Implemented; static checks; **Not tested** at runtime |
-| `Shared/Net` + `NetService` (remotes, type checks, rate limit) | **Partially tested** — the ready event reached the server in Studio; rejection paths not yet run |
-| `SessionService` (mode detection, phase machine, replication) | **Partially tested** — mode and initial phase confirmed in Studio (owner, 2026-11-12); phase changes not yet run |
-| `PlayerService` (join, leave, ready, reconnect grace, respawn signal) | **Partially tested** — join and ready confirmed in Studio (owner, 2026-11-12); leave, respawn, reconnect not yet run |
-| `InteractionSystem` (tag-driven, server-validated prompts)  | **Partially tested** — found both tagged test objects at startup in Studio; triggering not yet confirmed |
-| `DebugInteractables` (Studio-only test kinds)               | Implemented; static checks; **Not tested** at runtime |
-| `SessionController` (client phase view, ready handshake)    | **Partially tested** — initial phase and handshake confirmed in Studio; phase changes not yet run |
-| World contract validator                                    | Partly implemented — `TLS_Interactable` objects are validated when bound; other tags are validated as their systems arrive |
-
-Phase 2 is complete only after checklist section "Phase 2" is run in Studio.
+| `Shared/GameState`, `Shared/RateLimiter`                    | Implemented; unit tested                       |
+| `Shared/Net` + `NetService`                                 | **Partially tested** — the ready event reached the server in Studio; server-to-client events added in 0.3.0 are **Not tested** |
+| `SessionService`                                            | **Partially tested** — mode and initial phase confirmed in Studio; phase changes not yet seen |
+| `PlayerService`                                             | **Partially tested** — join and ready confirmed in Studio |
+| `OverheadGuard` (shows hidden ceilings during play)         | Implemented; **Not tested**                    |
 
 ## Phase 6 (early) — Draft map generator
 
 | Item                                                      | Status                                         |
 | --------------------------------------------------------- | ---------------------------------------------- |
-| Layout v3: 29 rooms in 4 areas, 30 connections (floor plan identical to v2, pinned by a test) | Implemented; unit tested (Luau CLI) |
-| Geometry math (walls, lintels, lights, door frames)       | Implemented; unit tested (Luau CLI): no two solid parts overlap; a character-sized flood fill from the spawn point reaches every room, marker and doorway |
-| Shell: structural rock up to the lowest ceiling, rock caps, one roof section per room | Implemented; unit tested (Luau CLI): sections cover exactly their rooms, nothing overlaps |
-| Unified palette and lamps                                 | Implemented; **Not tested** — appearance can only be judged in Studio |
-| Instance builder (parts, materials, lights, tags)         | **Partially tested** — the owner generated and viewed layouts v1 and v2 in Studio; v3 **Not tested** in Studio |
-| Commands: `generate`, `regenerate`, `status`, `hideCeilings`, `showCeilings` | **Partially tested** — the owner ran generation and ceiling hiding on v2; v3 behaviour **Not tested** |
-| Commands: `viewFromAbove`, `applyLightingPreset`, `restoreLighting` | Implemented; static checks; **Not tested** in Studio |
-| `Systems/OverheadGuard` (shows hidden ceilings while the game runs) | Implemented; static checks; **Not tested** at runtime |
-| Safety: idempotent generate, backup instead of delete, refusal for foreign content, deterministic output | Implemented; determinism unit tested; the rest **Not tested** in Studio |
-| Rojo mapping `ServerStorage.TLS_DevTools`                 | **Tested** — verified against a live `rojo serve` tree; synced to the owner's Studio |
+| Layout v3: 29 rooms, 30 connections, pinned by a test     | Implemented; unit tested; **generated in Studio by the owner** (29 rooms, 26 doors, 4 archways, 53 lights, 636 parts) |
+| Commands `regenerate`, `viewFromAbove`, `hideCeilings`, `showCeilings`, `applyLightingPreset`, `restoreLighting` | **Tested** — reported working by the owner |
+| Walkability of the generated map                          | Unit tested (flood fill); the owner reached the elevator floor in Play; a full walk-through is **Not tested** |
 
-The generated map is a draft blockout: no final lighting mood, fog, sound, decoration or
-working doors. Doors are walk-through placeholders until the door system exists.
+## Known limitations of the environment
 
-## Phases 3–5, 7–8
-
-Not started. See `PROJECT_PLAN.md`.
-
-## Known limitations
-
-- Development runs in a cloud workspace with no Roblox Studio, so runtime verification
-  depends on the owner running the checklist in Studio.
-- `Session` and `Lobby` server modes cannot be exercised in Studio (Studio always runs in
-  `Studio` mode); they need a published place.
-- Reconnect data retention can only be observed on a published place.
-- The standalone Luau CLI is not available through Rokit; without it `scripts/check.sh`
-  reports the unit tests as skipped.
-- No map exists. `Workspace` content is created in Studio and is not stored in this
-  repository.
+- Development runs in a cloud workspace with no Roblox Studio, so nothing can be executed
+  inside Roblox there. Runtime verification depends on the owner running the checklist.
+- `Session` and `Lobby` server modes and reconnecting need a published place.
+- The map lives in the Studio place file, not in this repository.
