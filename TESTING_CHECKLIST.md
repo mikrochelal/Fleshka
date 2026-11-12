@@ -14,6 +14,7 @@ Run `scripts/check.sh` before every commit.
 | `stylua --check src tests`      | Pass   | 2026-11-12 |                               |
 | `selene src`                    | Pass   | 2026-11-12 | 0 errors, 0 warnings          |
 | Unit tests (`tests/run.luau`)   | Pass   | 2026-11-12 | 28/28, Luau CLI 0.746         |
+| Map unit tests (`tests/map.luau`) | Pass | 2026-11-12 | 1387/1387, layout v1          |
 | `luau-lsp analyze` (strict)     | Pass   | 2026-11-12 |                               |
 
 ## Phase 1 — manual tests in Roblox Studio
@@ -57,6 +58,25 @@ if your place is different.
 | 2.10 | Stop and Play again                               | Still exactly one `TLS_Prompt` per cube and one `TLS_Remotes` folder                           | Not run |      |
 | 2.11 | Exploit paths (trigger from too far / through a wall / forged remote arguments) | Request ignored by the server                               | Not run — needs a custom test client | |
 | 2.12 | Reconnect within 120 s                            | Output shows `<name> reconnected`                                                              | Blocked — needs a published place | |
+
+## Draft map generator — manual tests in Roblox Studio
+
+Commands are in `docs/MAP_GENERATOR.md`. Run them in the Command Bar with the game stopped.
+
+| #    | Test                                                   | Expected                                                                                  | Result  | Date |
+| ---- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ------- | ---- |
+| M.1  | After Rojo sync, look at Explorer                      | `ServerStorage.TLS_DevTools.MapGenerator` exists; other ServerStorage content untouched   | Not run |      |
+| M.2  | Run `generate()`                                       | Output `[TLS:MapGenerator] Created Workspace.Station09: 22 rooms, 21 doors, … lights, … parts (layout v1)`; no errors | Not run | |
+| M.3  | Run `generate()` again                                 | Warning "already exists - nothing changed"; still exactly one `Station09`                 | Not run |      |
+| M.4  | Select `Station09`, press F; run `setCeilingsVisible(false)` | Camera shows the station under the Baseplate; floor plan visible from above; four area folders with the documented rooms | Not run | |
+| M.5  | Visual check                                           | No gaps between walls and floors, no flickering surfaces, doorways open, lights on in every room | Not run | |
+| M.6  | Play Here in the Elevator, walk Elevator → Comm Center → Radio Mast and Lab → Archive | Every doorway is passable; no place where the character gets stuck or falls out | Not run | |
+| M.7  | Run `regenerate()`                                     | Old map appears in `ServerStorage.TLS_MapBackups`; one new `Station09` in Workspace       | Not run |      |
+| M.8  | Rename a hand-made Folder to `Station09` (with the generated one moved away), run `generate()` and `regenerate()` | Both refuse; the folder is untouched | Not run | |
+| M.9  | Press Ctrl+Z after `generate()`                        | The generated map is removed                                                              | Not run |      |
+| M.10 | Run `generate()` while the game is playing             | Refuses with "Stop the game first"                                                        | Not run |      |
+| M.11 | With the map present, press Play and read Output       | No new TLS warnings from game systems; Phase 2 tests still pass                           | Not run |      |
+| M.12 | Mobile emulator (Test → Device) walking the map        | Acceptable frame rate                                                                     | Not run |      |
 
 ## Standard scenarios (apply to every gameplay system)
 

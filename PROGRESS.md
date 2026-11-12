@@ -41,7 +41,21 @@ _Last updated: 2026-11-12_
 
 Phase 2 is complete only after checklist section "Phase 2" is run in Studio.
 
-## Phases 3–8
+## Phase 6 (early) — Draft map generator
+
+| Item                                                      | Status                                         |
+| --------------------------------------------------------- | ---------------------------------------------- |
+| Layout data: 22 rooms in 4 areas, 23 connections          | Implemented; unit tested (Luau CLI): no overlapping rooms, every room reachable, props and markers inside rooms |
+| Geometry math (walls split around openings, lintels, lights, doors) | Implemented; unit tested (Luau CLI): every doorway and archway is open, walls do not overlap |
+| Instance builder (parts, materials, lights, tags)         | Implemented; static checks; **Not tested** — has never run in Studio |
+| Commands: `generate`, `regenerate`, `status`, `setCeilingsVisible` | Implemented; static checks; **Not tested** in Studio |
+| Safety: idempotent generate, backup instead of delete, refusal for foreign content | Implemented; **Not tested** in Studio |
+| Rojo mapping `ServerStorage.TLS_DevTools`                 | Implemented; `rojo build` verified; **Not tested** with live sync |
+
+The generated map is a draft blockout: no final lighting mood, fog, sound, decoration or
+working doors. Doors are walk-through placeholders until the door system exists.
+
+## Phases 3–5, 7–8
 
 Not started. See `PROJECT_PLAN.md`.
 

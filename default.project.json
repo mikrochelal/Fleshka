@@ -25,6 +25,12 @@
           "$path": "src/StarterPlayer/StarterPlayerScripts"
         }
       }
+    },
+    "ServerStorage": {
+      "$className": "ServerStorage",
+      "TLS_DevTools": {
+        "$path": "src/ServerStorage/DevTools"
+      }
     }
   }
 }

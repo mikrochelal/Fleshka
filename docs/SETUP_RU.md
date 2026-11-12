@@ -68,6 +68,39 @@ rojo plugin install
 После каждой работы в Studio: **File → Save to File As…** → сохраните файл
 `TheLastSignal_ГГГГ-ММ-ДД.rbxl` в отдельную папку вне репозитория. Храните несколько копий.
 
+## Черновая карта STATION-09
+
+Карту создаёт отдельный инструмент — он не часть игры и сам ничего не запускает.
+Подробности (на английском): [MAP_GENERATOR.md](MAP_GENERATOR.md).
+
+1. Rojo подключён, игра **остановлена**.
+2. Откройте **View → Command Bar**, вставьте строку и нажмите Enter:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).generate()
+   ```
+
+3. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
+4. В Explorer выберите `Workspace → Station09` и нажмите **F** — камера перейдёт к карте
+   (она находится под Baseplate).
+5. Чтобы увидеть планировку сверху, скройте потолки:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).setCeilingsVisible(false)
+   ```
+
+   Вернуть потолки — та же команда с `true`.
+6. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
+   кнопкой по полу → **Play Here**.
+
+Правила безопасности инструмента:
+
+- Он создаёт только `Workspace.Station09` и больше ничего не трогает.
+- Повторный `generate()` ничего не меняет.
+- `regenerate()` не удаляет старую карту, а переносит её в `ServerStorage.TLS_MapBackups`.
+- Свои объекты стройте в отдельной папке, например `Workspace.Station09_Custom`, а не
+  внутри `Station09` — иначе при `regenerate()` они уедут в резервную копию вместе с картой.
+
 ## Чего делать нельзя
 
 - Не создавайте объекты вручную внутри папок `ReplicatedStorage.Shared`,

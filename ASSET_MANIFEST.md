@@ -8,7 +8,18 @@ Status values: **Final** · **Placeholder** (must be replaced before release) ·
 
 ## Currently used
 
-None. The project contains code only; no asset IDs are referenced.
+No asset IDs are referenced anywhere in the project.
+
+The draft map generator (`docs/MAP_GENERATOR.md`) creates only plain parts with built-in
+Roblox materials and `PointLight`s. Everything it creates is a placeholder:
+
+| Generated content                                   | Status      | Replace with                              |
+| --------------------------------------------------- | ----------- | ----------------------------------------- |
+| Floors, walls, ceilings (blockout)                  | Placeholder | Final architecture / textured geometry    |
+| Door panels (half-transparent, walk-through)        | Placeholder | Door models driven by the door system     |
+| Ceiling light fixtures (neon boxes)                 | Placeholder | Final fixtures and lighting design        |
+| `Placeholder_*` boxes (desk, lockers, generator, monitor wall, lab benches, receiver, tape shelves, keypad, central computer, radio station, server racks, mast base, main lever) | Placeholder | Final props / puzzle models |
+| `BreakerPanel_1..3` boxes                           | Placeholder | Breaker panel models for the power puzzle |
 
 ## Needed (identified from the design, nothing chosen yet)
 

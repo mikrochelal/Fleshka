@@ -28,6 +28,7 @@ echo "== unit tests"
 # Pure-logic tests need the standalone Luau CLI (https://github.com/luau-lang/luau/releases).
 if command -v luau >/dev/null 2>&1; then
 	luau tests/run.luau
+	luau tests/map.luau
 else
 	echo "SKIPPED: luau CLI not installed - unit tests did not run"
 fi

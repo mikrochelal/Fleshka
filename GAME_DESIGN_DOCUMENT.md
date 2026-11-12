@@ -208,10 +208,37 @@ StarterPlayerScripts/TheLastSignal
   The list is finalised when each system is implemented; a validator will report missing or
   misconfigured tags in the Output window at startup.
 
-- **Map bootstrap:** because the map cannot be authored from this repository, Phase 6 ships
-  an idempotent graybox generator that is run once from Studio. It creates a tagged
-  blockout under a single `Workspace.Station09` model and refuses to run if that model
-  already exists, so it can never overwrite hand-built work.
+- **Map bootstrap:** because the map cannot be authored from this repository, a development
+  tool (`ServerStorage.TLS_DevTools.MapGenerator`, see `docs/MAP_GENERATOR.md`) generates a
+  tagged draft blockout of all four areas under `Workspace.Station09`. It is run by hand
+  from the Studio Command Bar, changes nothing if the map already exists, never deletes
+  (rebuilding moves the old map to `ServerStorage.TLS_MapBackups`) and never touches content
+  it did not create. The floor plan is data in `Layout.luau`; final decoration, lighting
+  mood and hand-made props are added in Studio on top of the draft.
+
+### Draft floor plan (layout v1)
+
+```text
+              C_Archive
+                 |
+   C_Airlock - C_MainLab - C_SignalChamber
+      |          |
+      |       C_Observation
+      |
+ B_EastCorridor ---- B_ServiceTunnel ---- B_MonitorRoom
+      |                                        |
+      +---- B_MainCorridor --------------------+-- Office101, Storage102 (north)
+      |          |                                 PowerRoom, Maintenance (south)
+      |     A_Checkpoint - A_SecurityBooth
+      |          |
+      |       A_Lobby - A_Elevator
+      |          |
+      |       A_Lockers
+      |
+ D_Antechamber =(code door)= D_CommCenter - D_ServerRoom
+                                  |
+                             D_RadioMast
+```
 
 ## 12. Assets
 
