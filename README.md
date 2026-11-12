@@ -1,0 +1,92 @@
+# THE LAST SIGNAL
+
+A 1–4 player cooperative psychological horror game for Roblox (PC + mobile).
+
+In 1998 the underground research facility STATION-09 went silent after transmitting one
+sentence: *"IT KNOWS WE ARE LISTENING."* Years later a new signal appears, and a team is sent
+down to find out why.
+
+> **Status:** early development — project foundation only. See [PROGRESS.md](PROGRESS.md).
+> Пошаговая инструкция на русском: [docs/SETUP_RU.md](docs/SETUP_RU.md).
+
+## How the project is organised
+
+| Part                        | Lives in                     | Tool            |
+| --------------------------- | ---------------------------- | --------------- |
+| Code, config, UI, docs      | This Git repository          | Editor + Rojo   |
+| Map, props, lighting, audio | The Roblox Studio place file | Roblox Studio   |
+
+Rojo copies the code from this repository into Roblox Studio. It does **not** copy anything
+back, and it does **not** touch `Workspace`. The map you build in Studio is stored only in
+the place file, so back that file up separately (see below).
+
+```text
+default.project.json      Rojo mapping (code only, never Workspace)
+src/
+  ReplicatedStorage/
+    Shared/               Modules used by both server and client
+    Config/               Tunable values
+  ServerScriptService/
+    Bootstrap.server.luau The only server Script
+    Services/             Game-wide server infrastructure
+    Systems/              Gameplay features (puzzles, AI, events)
+  StarterPlayer/StarterPlayerScripts/
+    ClientBootstrap.client.luau   The only LocalScript
+    Controllers/          Client behaviour and UI
+scripts/check.sh          Static validation
+```
+
+## Setup
+
+1. Install [Roblox Studio](https://create.roblox.com/landing).
+2. Install [Git](https://git-scm.com/downloads) and clone this repository.
+3. Install [Rokit](https://github.com/rojo-rbx/rokit/releases/latest), then in the repository
+   folder run:
+   ```bash
+   rokit install
+   ```
+   This installs the exact tool versions pinned in `rokit.toml` (Rojo 7.7.1, Selene, StyLua,
+   luau-lsp).
+4. Install the Rojo Studio plugin (must be the same 7.x version as the CLI):
+   ```bash
+   rojo plugin install
+   ```
+5. Start the sync server:
+   ```bash
+   rojo serve
+   ```
+6. Open your place in Roblox Studio → **Plugins** tab → **Rojo** → **Connect**.
+7. Press **Play**. The Output window should show:
+   ```text
+   [TLS:Server] THE LAST SIGNAL v0.1.0 started: 0 services, 0 systems
+   [TLS:Client] Client started: 0 controllers
+   ```
+
+Official Rojo documentation: <https://rojo.space/docs/v7/>.
+
+## Backing up the Studio place
+
+Studio-built content is not in Git. After every building session:
+
+1. In Studio: **File → Save to File As…** and save `TheLastSignal_YYYY-MM-DD.rbxl` into a
+   backup folder outside this repository (or into `backups/`, which Git ignores).
+2. Keep several dated copies, ideally also in cloud storage.
+
+## Validation
+
+```bash
+scripts/check.sh
+```
+
+Runs the Workspace safety guard, `rojo build`, StyLua, Selene and Luau type analysis.
+These are static checks; gameplay is verified in Studio using
+[TESTING_CHECKLIST.md](TESTING_CHECKLIST.md).
+
+## Documentation
+
+- [GAME_DESIGN_DOCUMENT.md](GAME_DESIGN_DOCUMENT.md) — design and technical architecture
+- [PROJECT_PLAN.md](PROJECT_PLAN.md) — roadmap
+- [PROGRESS.md](PROGRESS.md) — what is actually implemented and tested
+- [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) — test procedures and results
+- [ASSET_MANIFEST.md](ASSET_MANIFEST.md) — assets and placeholders
+- [CLAUDE.md](CLAUDE.md) — development rules

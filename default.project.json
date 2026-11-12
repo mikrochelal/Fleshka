@@ -1,0 +1,30 @@
+{
+  "name": "TheLastSignal",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "Config": {
+        "$path": "src/ReplicatedStorage/Config"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "TheLastSignal": {
+        "$path": "src/ServerScriptService"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "TheLastSignal": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts"
+        }
+      }
+    }
+  }
+}
