@@ -30,7 +30,12 @@ local function percept(overrides: { [string]: any }?): Brain.Percept
 		arrived = false,
 		pathFailed = false,
 		pursuitArmed = false,
-		caught = false,
+		patrolArmed = false,
+		stalkArmed = false,
+		detectionRate = 1,
+		inReach = false,
+		routeDone = false,
+		searchDone = false,
 	}
 	for key, value in overrides or {} do
 		base[key] = value
@@ -54,6 +59,13 @@ end
 local SEEN = { seesTarget = true, targetDistance = 30, nearestDistance = 30 }
 local SEEN_ARMED =
 	{ seesTarget = true, targetDistance = 30, nearestDistance = 30, pursuitArmed = true }
+local IN_REACH = {
+	seesTarget = true,
+	targetDistance = 3,
+	nearestDistance = 3,
+	pursuitArmed = true,
+	inReach = true,
+}
 
 -- Waking up.
 do
@@ -198,7 +210,10 @@ do
 		"short loss of sight keeps the pursuit",
 		run(brain, CopyConfig.LoseSightTime - 1, { pursuitArmed = true }) == "Pursuing"
 	)
-	check("long loss of sight ends it", run(brain, 1.5, { pursuitArmed = true }) == "Searching")
+	check(
+		"long loss of sight sends it to the last known position",
+		run(brain, 1.5, { pursuitArmed = true }) == "LostTarget"
+	)
 end
 do
 	local brain = pursuing()
@@ -209,9 +224,17 @@ do
 end
 do
 	local brain = pursuing()
-	local caught = table.clone(SEEN_ARMED) :: any
-	caught.caught = true
-	check("a catch ends the pursuit", run(brain, STEP, caught) == "Disappearing")
+	check("no attack during the warning", run(brain, STEP, IN_REACH) == "Pursuing")
+	run(brain, CopyConfig.ChaseWarningTime, SEEN_ARMED)
+	check("a target in reach starts an attack", run(brain, STEP, IN_REACH) == "Attacking")
+	check(
+		"the attack has a windup",
+		run(brain, CopyConfig.AttackWindup - 0.2, IN_REACH) == "Attacking" and not brain.caught
+	)
+	local state = run(brain, 0.2, IN_REACH)
+	check("a catch ends the pursuit", state == "Disappearing" and brain.caught)
+	run(brain, STEP)
+	check("the catch is reported for one update only", not brain.caught)
 	run(brain, CopyConfig.FadeTime + 0.2)
 	check(
 		"a catch gives the longer cooldown",
