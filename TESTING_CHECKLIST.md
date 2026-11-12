@@ -14,9 +14,9 @@ Run `scripts/check.sh` before every commit.
 | `stylua --check src tests`      | Pass   | 2026-11-12 |                               |
 | `selene src`                    | Pass   | 2026-11-12 | 0 errors, 0 warnings          |
 | Unit tests (`tests/run.luau`)   | Pass   | 2026-11-12 | 28/28, Luau CLI 0.746         |
-| Map unit tests (`tests/map.luau`) | Pass | 2026-11-12 | 1348/1348, layout v3: no overlapping parts, character flood fill reaches every room |
+| Map unit tests (`tests/map.luau`) | Pass | 2026-11-12 | 2887/2887, layout v4 (55 rooms): original 29 rooms unchanged, no overlapping parts, character flood fill reaches every room, two door signs per connection |
 | THE COPY rules (`tests/copy.luau`) | Pass | 2026-11-12 | 45/45: waking, fairness, warning, lost sight, time limit, catch, cooldowns |
-| Gameplay data (`tests/props.luau`) | Pass | 2026-11-12 | 165/165: object placements against the map, documents, transmissions, objectives, breakers |
+| Gameplay data (`tests/props.luau`) | Pass | 2026-11-12 | 175/175 against layout v4 |
 | `luau-lsp analyze` (strict)     | Pass   | 2026-11-12 |                               |
 
 ## Phase 1 — manual tests in Roblox Studio
@@ -87,6 +87,24 @@ Commands are in `docs/MAP_GENERATOR.md`. Run them in the Command Bar with the ga
 | M.18 | Run `generate()` while the game is playing             | Refuses with "Stop the game first"                                                        | Not run |      |
 | M.19 | Mobile emulator (Test → Device) walking the map        | Acceptable frame rate                                                                     | Not run |      |
 
+## Expanded station (layout v4) — manual tests in Roblox Studio
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| X.1  | Run `regenerate()` | Old map moved to `ServerStorage.TLS_MapBackups.Station09_v3_backup_…`; Output `Created Workspace.Station09: 55 rooms, 53 doors, 6 archways, 99 lights, … parts (layout v4, …)` (about 1,230 parts) | Not run | |
+| X.2  | Explorer: `Workspace.Station09` | Eight zone folders `A_Entrance` … `H_Containment`, plus `Doors`, `Archways`, `Shell`, `Markers` | Not run | |
+| X.3  | `viewFromAbove()` then `showOverlay()` | Every room labelled with name and purpose; the original rooms where they were; SPAWN, COPY VANTAGE, BREAKER, LOCKED and NEEDS POWER markers visible | Not run | |
+| X.4  | `hideOverlay()`; and separately press Play with the overlay shown | Labels gone; in Play Output shows `Developer overlay hidden for this play session` and no labels are visible | Not run | |
+| X.5  | `listRooms()` | 55 lines in Output | Not run | |
+| X.6  | Walk: Junction → east to the Isolation Chamber | Passable; medical wing looks different from the corridors; quarantine part lit red before power | Not run | |
+| X.7  | Walk: North Corridor → Archive Corridor → all four archive rooms | Passable; brick walls | Not run | |
+| X.8  | Walk: Power Room → Service Corridor → Generator Hall → Pipe Tunnel → Cargo Corridor → Checkpoint → Observation Chamber → Signal Source | Passable; the Signal Source is a tall room with a large core | Not run | |
+| X.9  | Walk: Cargo Corridor → Access Control → Lobby; Service Corridor east door → South Corridor | Both loops passable | Not run | |
+| X.10 | Look above doorways from both sides | The wall above each door shows the name of the room beyond; text upright, not mirrored | Not run | |
+| X.11 | Visual check of new wings | No gaps, no flickering surfaces, no light leaking through walls | Not run | |
+| X.12 | Play the slice on the new map (sections below) | Still completable; breakers, lever, radio, console, elevator where they were | Not run | |
+| X.13 | Frame rate while walking the whole station, PC and mobile emulator | Acceptable (about 1,230 parts, 99 lights without shadows) | Not run | |
+
 ## Playable slice (version 0.3.0) — manual tests in Roblox Studio
 
 Needs the generated map. None of these has been run yet. Controls: Shift sprint, F
@@ -96,7 +114,7 @@ flashlight, E interact, X close document.
 
 | #    | Test | Expected | Result | Date |
 | ---- | ---- | -------- | ------ | ---- |
-| S.1  | Press Play, read Output | `[TLS:WorldService] Map found: 29 rooms`; `[TLS:WorldProps] 10 gameplay object(s) placed`; `[TLS:FacilityLights] 53 light fixture(s) under control`; `[TLS:Power] 3 breaker panel(s); start-up order generated`; `[TLS:Atmosphere] Underground base lighting applied for this play session`; `[TLS:Spawn] <name> placed at the station entrance`; phase lines `Lobby -> Loading -> Intro -> Playing`; no TLS warnings, no red errors | Not run | |
+| S.1  | Press Play, read Output | `[TLS:WorldService] Map found: 55 rooms` (29 with the old map); `[TLS:WorldProps] 10 gameplay object(s) placed`; `[TLS:FacilityLights] 99 light fixture(s) under control` (53 with the old map); `[TLS:Power] 3 breaker panel(s); start-up order generated`; `[TLS:Atmosphere] Underground base lighting applied for this play session`; `[TLS:Spawn] <name> placed at the station entrance`; phase lines `Lobby -> Loading -> Intro -> Playing`; no TLS warnings, no red errors | Not run | |
 | S.2  | Watch the screen at start | Title card "STATION-09" for about 7 s, then the elevator room; character stands on the floor, not in a wall | Not run | |
 | S.3  | Reset the character (Esc → Reset) | Respawns in the elevator | Not run | |
 | S.4  | Play in a place without the map | One warning from WorldService explaining how to generate the map; no errors | Not run | |

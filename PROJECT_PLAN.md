@@ -19,7 +19,18 @@ across them, so the game can be played and judged early:
 | 7 Story | Title card, slice ending | Intro cinematic, full final sequence, credits |
 | 8 Polish | — | Everything |
 
-**Next milestone (recommended):** verify the slice in Studio and fix what the first real
+**Layout v4** expanded the station to 55 rooms in eight zones (see
+`docs/ROOM_DIRECTORY.md`). The current production order is the nine-milestone list in
+`PROGRESS.md`; the recommended next steps are:
+
+1. Verify layout v4 and the slice in Studio; fix what the first run shows.
+2. Door system: doors that open, powered doors, the code door — the new wings are gated by
+   doors that are still walk-through.
+3. Extend the mission through the new wings (power puzzle in zone G, archive code in F,
+   containment access in H, escape by the freight elevator) with the lore discoveries.
+4. Environment dressing per zone, then THE COPY upgrade and the scripted scares.
+
+**Earlier recommendation:** verify the slice in Studio and fix what the first real
 run shows; then the door system and the Security Code puzzle (the code door already exists
 on the map), then audio assets.
 

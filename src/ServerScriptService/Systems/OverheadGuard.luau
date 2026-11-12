@@ -10,6 +10,7 @@ local Workspace = game:GetService("Workspace")
 local Logger = require(ReplicatedStorage.Shared.Logger)
 
 local TAG = "TLS_Overhead"
+local DEV_OVERLAY = "TLS_DevOverlay"
 
 local log = Logger.new("OverheadGuard")
 
@@ -30,6 +31,13 @@ function OverheadGuard.Start(_self: any)
 	end
 	if restored > 0 then
 		log:info(`{restored} hidden ceiling part(s) shown for this play session`)
+	end
+
+	-- The map tool's developer overlay (room labels) is an editing aid too.
+	local overlay = Workspace:FindFirstChild(DEV_OVERLAY)
+	if overlay and overlay:GetAttribute(DEV_OVERLAY) == true then
+		overlay:Destroy()
+		log:info("Developer overlay hidden for this play session")
 	end
 end
 

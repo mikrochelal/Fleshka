@@ -45,8 +45,13 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
   `docs/MAP_GENERATOR.md`; `generate`/`regenerate` may only create or move
   `Workspace.Station09`. Its only other effects are explicit commands: `viewFromAbove`
   (editor camera) and `applyLightingPreset` (six `Lighting` properties, reversible).
-- The reference floor plan in `Layout.luau` is pinned by checksums in `tests/map.luau`.
-  Do not move rooms or connections unless the owner asks for a layout change.
+- The original 29 rooms and 30 connections in `Layout.luau` are pinned by checksums in
+  `tests/map.luau` and must never move. Expand the station only by appending rooms and
+  connections after them, give each new room an entry in `purposes`, bump `version`, and
+  regenerate `docs/ROOM_DIRECTORY.md`. `tests/map.luau` must stay green: it proves no solid
+  parts overlap and a character can walk into every room.
+- The map tool's developer overlay lives in `Workspace.TLS_DevOverlay` and is removed by
+  `Systems/OverheadGuard` during play.
 
 ## Architecture rules
 

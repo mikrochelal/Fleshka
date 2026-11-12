@@ -17,7 +17,7 @@ return table.freeze({
 
 	-- Light circuits (the `Circuit` attribute on TLS_Light fixtures) that are dead until
 	-- power is restored. Circuit "A" (entrance) runs on its own backup and stays lit.
-	UnpoweredCircuits = table.freeze({ "B", "C", "D" }),
+	UnpoweredCircuits = table.freeze({ "B", "C", "D", "E", "F", "G", "H" }),
 	-- Red emergency lamps: lit while the power is out, switched off once it returns.
 	EmergencyCircuit = "Emergency",
 

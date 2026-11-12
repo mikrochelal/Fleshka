@@ -19,6 +19,9 @@ export type Footprint = {
 
 export type Box = {
 	name: string,
+	-- Unused here; kept so shell boxes share the shape of Plan.Box.
+	sign: string?,
+	face: string?,
 	x: number,
 	y: number,
 	z: number,
