@@ -1,6 +1,6 @@
 --!strict
--- The radio receiver (object with Kind = "Radio"). It is dead until power returns, then
--- starts receiving; listening plays the scripted transmission to every player: subtitles,
+-- The radio receiver (object with Kind = "Radio"). It is dead until the mission script
+-- wakes it (once the communications relay is online), then starts receiving; listening plays the scripted transmission to every player: subtitles,
 -- timed silences, flickering lights and screen interference.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -14,7 +14,6 @@ local SessionService = require(script.Parent.Parent.Services.SessionService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
 local FacilityLights = require(script.Parent.FacilityLights)
 local InteractionSystem = require(script.Parent.InteractionSystem)
-local PowerSystem = require(script.Parent.PowerSystem)
 local WorldProps = require(script.Parent.WorldProps)
 
 type RadioState = "Dead" | "Receiving" | "Playing" | "Finished"
@@ -62,7 +61,8 @@ local function setAppearance(text: string, color: Color3, glowing: boolean)
 	end
 end
 
-local function onPowerRestored()
+-- Brings the receiver to life (called by the mission script). Does nothing if it already is.
+function RadioSystem.wake()
 	if state ~= "Dead" or not radio then
 		return
 	end
@@ -113,11 +113,7 @@ function RadioSystem.Start(_self: any)
 			log:warn("The radio was not placed: the transmission cannot be played")
 			return
 		end
-		setAppearance("RECEIVER\nNO POWER", COLOR_IDLE, false)
-		PowerSystem.restored:Connect(onPowerRestored)
-		if PowerSystem.isOn() then
-			onPowerRestored()
-		end
+		setAppearance("RECEIVER\nOFFLINE", COLOR_IDLE, false)
 	end)
 end
 

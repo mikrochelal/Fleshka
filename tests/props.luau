@@ -245,11 +245,13 @@ local expected = {
 	"EnterStation",
 	"FindPowerControls",
 	"RestorePower",
+	"RestoreSystems",
 	"InvestigateRadio",
+	"TraceSignal",
 	"ReachCommCenter",
 	"Escape",
 }
-check("six objectives", #ObjectiveConfig.List == #expected)
+check("eight objectives", #ObjectiveConfig.List == #expected)
 for index, id in expected do
 	local objective = ObjectiveConfig.List[index]
 	check(

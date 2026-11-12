@@ -11,6 +11,7 @@ Body.EYE_HEIGHT = 6.4
 
 local COLOR = Color3.fromRGB(12, 12, 14)
 local ROOT_NAME = "Root"
+local GLOW_NAME = "Glow"
 
 -- name, size, centre offset from the feet
 local PARTS: { { any } } = {
@@ -54,6 +55,16 @@ function Body.build(): Model
 	for _, definition in PARTS do
 		newPart(definition[1], definition[2], definition[3], model)
 	end
+
+	-- An almost black figure is invisible in an unlit room. A faint cold glow at chest
+	-- height lights the floor and walls around it, so its outline reads against them.
+	local glow = Instance.new("PointLight")
+	glow.Name = GLOW_NAME
+	glow.Color = Color3.fromRGB(120, 140, 150)
+	glow.Range = 11
+	glow.Brightness = 0.7
+	glow.Shadows = false
+	glow.Parent = model:FindFirstChild("Torso")
 	return model
 end
 
@@ -63,6 +74,11 @@ function Body.setTransparency(model: Model, transparency: number)
 		if child:IsA("BasePart") and child.Name ~= ROOT_NAME then
 			child.Transparency = transparency
 		end
+	end
+	local torso = model:FindFirstChild("Torso")
+	local glow = torso and torso:FindFirstChild(GLOW_NAME)
+	if glow and glow:IsA("PointLight") then
+		glow.Enabled = transparency < 0.5
 	end
 end
 

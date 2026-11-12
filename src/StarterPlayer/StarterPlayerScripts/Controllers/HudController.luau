@@ -30,6 +30,7 @@ local batteryFill: Frame
 local batteryLabel: TextLabel
 local sprintButton: TextButton?
 local shownObjective = 0
+local powerLabel: TextLabel
 
 local function bar(parent: Instance, title: string, order: number): (Frame, TextLabel)
 	local row = Theme.make("Frame", {
@@ -112,6 +113,23 @@ local function renderObjectives()
 	if index > #list then
 		objectiveRow("All objectives complete.", false, index)
 	end
+	-- One line of practical help under the current objective.
+	local current = list[index]
+	if current and current.hint then
+		Theme.make("TextLabel", {
+			Name = "Hint",
+			Size = UDim2.fromScale(1, 0),
+			AutomaticSize = Enum.AutomaticSize.Y,
+			BackgroundTransparency = 1,
+			Font = Theme.Font.Regular,
+			TextSize = 12,
+			TextColor3 = Theme.Color.Dim,
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextWrapped = true,
+			Text = current.hint,
+			LayoutOrder = index + 1,
+		}, objectiveList)
+	end
 end
 
 local function renderBars()
@@ -139,6 +157,21 @@ local function renderBars()
 		local held = InputController.isSprintHeld()
 		sprintButton.BackgroundColor3 = if held then Theme.Color.Accent else Theme.Color.Panel
 		sprintButton.TextColor3 = if held then Theme.Color.Ink else Theme.Color.Text
+	end
+end
+
+local function renderPower()
+	local engaged = ReplicatedStorage:GetAttribute(GameState.BREAKERS_ENGAGED_ATTRIBUTE)
+	local total = ReplicatedStorage:GetAttribute(GameState.BREAKERS_TOTAL_ATTRIBUTE)
+	if ReplicatedStorage:GetAttribute(GameState.POWER_ATTRIBUTE) == true then
+		powerLabel.Text = "EMERGENCY POWER   ONLINE"
+		powerLabel.TextColor3 = Theme.Color.Accent
+	elseif type(engaged) == "number" and type(total) == "number" and total > 0 then
+		powerLabel.Text = `EMERGENCY POWER   OFFLINE   BREAKERS {engaged}/{total}`
+		powerLabel.TextColor3 = Theme.Color.Warning
+	else
+		powerLabel.Text = "EMERGENCY POWER   OFFLINE"
+		powerLabel.TextColor3 = Theme.Color.Warning
 	end
 end
 
@@ -216,6 +249,18 @@ local function build()
 		Padding = UDim.new(0, 4),
 	}, objectiveList)
 
+	powerLabel = Theme.make("TextLabel", {
+		Name = "Power",
+		Size = UDim2.new(1, 0, 0, 12),
+		BackgroundTransparency = 1,
+		Font = Theme.Font.Medium,
+		TextSize = 11,
+		TextColor3 = Theme.Color.Warning,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Text = "",
+		LayoutOrder = 2,
+	}, objective)
+
 	-- Status bars, bottom left.
 	local status = Theme.make("Frame", {
 		Name = "Status",
@@ -261,8 +306,18 @@ function HudController.Start(_self: any)
 	player.CharacterAdded:Connect(function()
 		task.defer(renderBars)
 	end)
+	for _, attribute in
+		{
+			GameState.POWER_ATTRIBUTE,
+			GameState.BREAKERS_ENGAGED_ATTRIBUTE,
+			GameState.BREAKERS_TOTAL_ATTRIBUTE,
+		}
+	do
+		ReplicatedStorage:GetAttributeChangedSignal(attribute):Connect(renderPower)
+	end
 	renderObjectives()
 	renderBars()
+	renderPower()
 end
 
 return HudController

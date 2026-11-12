@@ -71,6 +71,8 @@ export type Brain = {
 	observeLimit: number,
 	fleeDistance: number,
 	config: Config,
+	-- The untuned configuration; `tune` always starts from it.
+	base: Config,
 }
 
 local Brain = {}
@@ -86,6 +88,7 @@ function Brain.new(config: Config): Brain
 		observeLimit = config.ObserveDuration,
 		fleeDistance = config.ObserveFleeDistance,
 		config = config,
+		base = config,
 	}
 end
 
@@ -106,6 +109,16 @@ function Brain.stage(brain: Brain, duration: number, fleeDistance: number)
 	brain.observeLimit = duration
 	brain.fleeDistance = fleeDistance
 	brain.seenTime = 0
+end
+
+-- Replaces some timing values (used by the escalation stages). Values not listed go back
+-- to the original configuration.
+function Brain.tune(brain: Brain, overrides: { [string]: number })
+	local tuned = table.clone(brain.base) :: any
+	for key, value in overrides do
+		tuned[key] = value
+	end
+	brain.config = tuned
 end
 
 function Brain.clearCooldown(brain: Brain)
