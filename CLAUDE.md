@@ -51,7 +51,23 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
 - Server modules: `Services/` (game-wide infrastructure) and `Systems/` (gameplay features).
   Client modules: `Controllers/`. Each may expose `Init()` (no yielding, no cross-module
   calls) and `Start()` (may yield, may call other modules). See `Shared/Loader.luau`.
-- Remotes are declared only in `Shared/Net.luau` and handled only through `NetService.on`.
+- `ServerScriptService/Data/` holds server-only content as plain tables (documents,
+  transmissions, the runtime prop list). Clients never receive it except through events.
+- Remotes are declared only in `Shared/Net.luau`. Client-to-server events are handled only
+  through `NetService.on`; server-to-client events are sent only with `NetService.fire` /
+  `fireAll` and carry presentation only (text, effects, sounds).
+- Shared state is replicated through attributes, not events, so late joiners are always
+  correct: mission state on `ReplicatedStorage`, per-player state on the `Player`. The
+  attribute names are constants in `Shared/GameState.luau`.
+- The map is reached only through `Services/WorldService` (tags). Anything the game creates
+  in the world at runtime goes into `WorldService.runtimeFolder()` and is never saved;
+  gameplay objects are listed in `Data/PropList.luau` and checked by `tests/props.luau`.
+- Systems that need the map wait with `WorldService.onReady`; systems that need players
+  use `PlayerService.observePlayers` / `observeCharacters`, so start-up order never matters.
+- Systems talk to each other through signals and small functions, not shared tables. Noise
+  goes through `Services/NoiseService`; mission order lives only in `Systems/SliceDirector`.
+- Logic that can be written without Roblox APIs (state machines, placement math) is kept in
+  its own module with no `game`/`script` access and gets a unit test in `tests/`.
 - The server is authoritative. Every remote handler validates argument types, game phase,
   player state and distance, and is rate limited. Clients send intent, never results.
 - Tunable numbers live in `ReplicatedStorage/Config`, not inline.
@@ -62,7 +78,8 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
 ## Quality rules
 
 - Never invent Roblox asset IDs. Missing assets get a clearly labelled placeholder and an
-  entry in `ASSET_MANIFEST.md`.
+  entry in `ASSET_MANIFEST.md`. Sounds are named in `Config/AudioConfig.luau`; an empty id
+  means "not chosen yet" and is skipped silently.
 - No pseudocode presented as a feature, no buttons that do nothing, no deprecated APIs
   (`wait`, `spawn`, `delay`, `BodyVelocity`, etc. — use `task.*` and modern constraints).
 - Never mark something as tested unless it was actually run. Status vocabulary used in

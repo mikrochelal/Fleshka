@@ -15,6 +15,8 @@ Run `scripts/check.sh` before every commit.
 | `selene src`                    | Pass   | 2026-11-12 | 0 errors, 0 warnings          |
 | Unit tests (`tests/run.luau`)   | Pass   | 2026-11-12 | 28/28, Luau CLI 0.746         |
 | Map unit tests (`tests/map.luau`) | Pass | 2026-11-12 | 1348/1348, layout v3: no overlapping parts, character flood fill reaches every room |
+| THE COPY rules (`tests/copy.luau`) | Pass | 2026-11-12 | 45/45: waking, fairness, warning, lost sight, time limit, catch, cooldowns |
+| Gameplay data (`tests/props.luau`) | Pass | 2026-11-12 | 165/165: object placements against the map, documents, transmissions, objectives, breakers |
 | `luau-lsp analyze` (strict)     | Pass   | 2026-11-12 |                               |
 
 ## Phase 1 — manual tests in Roblox Studio
@@ -46,7 +48,7 @@ if your place is different.
 
 | #    | Test                                              | Expected                                                                                       | Result  | Date |
 | ---- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------- | ---- |
-| 2.1  | Press Play, read Output                           | `[TLS:SessionService] Mode: Studio, phase: Lobby`; `[TLS:Interaction] 2 tagged object(s) found`; `[TLS:Server] … started: 3 services, 3 systems`; `[TLS:Client] Client started: 1 controllers`; `[TLS:Session] Phase: Lobby`; no TLS warnings | Pass (owner; build with 2 systems, before OverheadGuard) | 2026-11-12 |
+| 2.1  | Press Play, read Output                           | `[TLS:SessionService] Mode: Studio, phase: Lobby`; `[TLS:Interaction] 2 tagged object(s) found`; `[TLS:Server] … started: 6 services, 14 systems`; `[TLS:Client] Client started: 7 controllers`; `[TLS:Session] Phase: Lobby`; no TLS warnings | Pass (owner; build with 2 systems, before OverheadGuard) | 2026-11-12 |
 | 2.2  | Ready handshake                                   | Output shows `[TLS:PlayerService] <name> joined` then `<name> is ready`                         | Pass (owner) | 2026-11-12 |
 | 2.3  | Walk to the cyan cube, press E (tap on mobile)    | Prompt "Toggle" appears within about 10 studs; cube glows; Output `[TLS:Debug] <name> toggled "ToggleTest" -> on`; again → off | Not run | |
 | 2.4  | Hold/spam E on the cyan cube                      | Never more than about 4 toggles per second                                                     | Not run |      |
@@ -84,6 +86,70 @@ Commands are in `docs/MAP_GENERATOR.md`. Run them in the Command Bar with the ga
 | M.17 | Press Ctrl+Z after `regenerate()`                      | Previous state is restored                                                                | Not run |      |
 | M.18 | Run `generate()` while the game is playing             | Refuses with "Stop the game first"                                                        | Not run |      |
 | M.19 | Mobile emulator (Test → Device) walking the map        | Acceptable frame rate                                                                     | Not run |      |
+
+## Playable slice (version 0.3.0) — manual tests in Roblox Studio
+
+Needs the generated map. None of these has been run yet. Controls: Shift sprint, F
+flashlight, E interact, X close document.
+
+### Start-up and spawning
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| S.1  | Press Play, read Output | `[TLS:WorldService] Map found: 29 rooms`; `[TLS:WorldProps] 10 gameplay object(s) placed`; `[TLS:FacilityLights] 53 light fixture(s) under control`; `[TLS:Power] 3 breaker panel(s); start-up order generated`; `[TLS:Spawn] <name> placed at the station entrance`; phase lines `Lobby -> Loading -> Intro -> Playing`; no TLS warnings, no red errors | Not run | |
+| S.2  | Watch the screen at start | Title card "STATION-09" for about 7 s, then the elevator room; character stands on the floor, not in a wall | Not run | |
+| S.3  | Reset the character (Esc → Reset) | Respawns in the elevator | Not run | |
+| S.4  | Play in a place without the map | One warning from WorldService explaining how to generate the map; no errors | Not run | |
+| S.5  | Local Server, 4 players | All four in the elevator at different spots | Not run | |
+
+### Movement, stamina, flashlight
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| P.1  | Hold Shift while walking | Faster; STAMINA bar drains in about 7 s; at zero the bar turns red and speed drops to walking | Not run | |
+| P.2  | Release Shift | After about 1 s the bar refills; sprint works again from 25% | Not run | |
+| P.3  | Hold Shift while standing still | Bar does not drain | Not run | |
+| P.4  | Press F | A beam lights the walls ahead; HUD shows FLASHLIGHT ON; F again turns it off | Not run | |
+| P.5  | Two players: one turns the light on | The other sees the beam | Not run | |
+| P.6  | Leave the light on (or lower `BatteryMax` temporarily) | Percentage falls; below 15% the beam flickers and the bar is red; at 0 it switches off with a warning | Not run | |
+| P.7  | With an empty battery, wait with the light off | Recharges slowly, never above 25% | Not run | |
+| P.8  | Take a battery pack (Lockers) with a partly used battery | "Battery replaced", 100%, the pack disappears; with a full battery it is not consumed | Not run | |
+| P.9  | Mobile emulator | RUN and LIGHT buttons on the right; both work; HUD readable | Not run | |
+
+### Objectives, documents, power puzzle
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| O.1  | Walk from the elevator into the lobby | Objective changes to "Find the emergency power controls"; the old one stays above it, dimmed and struck through | Not run | |
+| O.2  | Read the document in the lobby | Viewer opens with title, date and text; CLOSE and X both close it | Not run | |
+| O.3  | Read the memo in the Security Booth | Lists the three breakers in an order; a new session gives a (usually) different order | Not run | |
+| O.4  | Enter the Power Room or switch any breaker | Objective changes to "Restore the facility power" | Not run | |
+| O.5  | Before power: look around the corridors | Corridors dark; entrance lit; red lamps in the service tunnel and airlock | Not run | |
+| O.6  | Switch a breaker | Panel turns amber, label "ENGAGED 1/3"; switching it again opens it | Not run | |
+| O.7  | Pull the lever with fewer than three breakers | Warning "The lever will not move"; nothing changes | Not run | |
+| O.8  | Engage all three in a wrong order, pull the lever | Warning, lights flicker, all breakers back to OFF | Not run | |
+| O.9  | Engage in the memo's order, pull the lever | Lights surge, corridor lights come on, emergency lamps go out, panels green, "Emergency power restored", objective changes | Not run | |
+| O.10 | Two players at different panels | Both see every panel change | Not run | |
+
+### Radio, sighting, THE COPY, ending
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| R.1  | Before power, look at the radio (Monitor Room) | Label "NO POWER", no prompt | Not run | |
+| R.2  | After power | Label "INCOMING SIGNAL", notification about a receiver | Not run | |
+| R.3  | Listen | Subtitles: static, "Station Nine... can anyone hear me?", pause, "Do not trust the voices.", pause with flicker, "IT KNOWS WE ARE LISTENING." with screen interference; then the objective changes | Not run | |
+| R.4  | Walk into the main corridor afterwards | Lights flicker; a tall dark figure stands at the far end for a few seconds, or vanishes when approached; happens once | Not run | |
+| R.5  | Use the console in the Comm Center before the radio | Message "No carrier signal"; no progress | Not run | |
+| R.6  | Use the console after the radio | "Recall signal sent"; objective "Find a way to escape"; elevator panel gets a prompt | Not run | |
+| C.1  | Fail the power puzzle, then wait near the lever with the flashlight on | Within about half a minute the figure may approach, stop and stare, then vanish; it does not chase | Not run | |
+| C.2  | After R.6, walk back toward the elevator | Output shows `[TLS:Copy]` state changes; on sight: "IT HAS SEEN YOU.", interference, 2 s pause, then it follows | Not run | |
+| C.3  | Sprint away and break line of sight | It loses you within about 5 s, searches, then disappears | Not run | |
+| C.4  | Let it reach you | Screen fades to black, you wake in the Comm Center, others see "<name> was taken." | Not run | |
+| C.5  | Watch it move through doorways | Follows corridors and doors, does not pass through walls | Not run | |
+| C.6  | Check fairness over several minutes | Never appears in view or right next to a player; quiet periods between encounters | Not run | |
+| E.1  | Use the elevator panel during "Find a way to escape" | Screen fades, subtitle "Thank you for bringing it outside.", card "SIGNAL LOST" with the time; KEEP EXPLORING closes it | Not run | |
+| E.2  | Player joins mid-session | Sees the current objective and lighting state; is placed in the elevator | Not run | |
+| E.3  | A player leaves during the puzzle or a chase | No errors; the others continue | Not run | |
 
 ## Standard scenarios (apply to every gameplay system)
 
