@@ -1,17 +1,28 @@
 --!strict
--- The radio receiver (object with Kind = "Radio"). It is dead until the mission script
--- wakes it (once the communications relay is online), then starts receiving; listening plays the scripted transmission to every player: subtitles,
--- timed silences, flickering lights and screen interference.
+-- The radio. Two jobs:
+--
+--   * the receiver in the Monitor Room (object with Kind = "Radio"): dead until the
+--     mission script wakes it (once the communications relay is online), then hissing with
+--     an incoming signal; listening plays the first transmission to every player;
+--   * `play`: the sequencer for every scripted transmission and console read-out -
+--     subtitles, timed silences, sounds at the source, flickering lights and screen
+--     interference.
+--
+-- After the first transmission the receiver is never quite silent again: `pulse` makes it
+-- crackle, and what comes through grows worse with THE COPY's escalation stage.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Logger = require(ReplicatedStorage.Shared.Logger)
 local Signal = require(ReplicatedStorage.Shared.Signal)
+local Text = require(ReplicatedStorage.Shared.Text)
 local Transmissions = require(script.Parent.Parent.Data.Transmissions)
+local AudioService = require(script.Parent.Parent.Services.AudioService)
 local NetService = require(script.Parent.Parent.Services.NetService)
 local NoiseService = require(script.Parent.Parent.Services.NoiseService)
 local SessionService = require(script.Parent.Parent.Services.SessionService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
+local AudioEmitters = require(script.Parent.AudioEmitters)
 local FacilityLights = require(script.Parent.FacilityLights)
 local InteractionSystem = require(script.Parent.InteractionSystem)
 local WorldProps = require(script.Parent.WorldProps)
@@ -20,7 +31,20 @@ type RadioState = "Dead" | "Receiving" | "Playing" | "Finished"
 
 local COLOR_RECEIVING = Color3.fromRGB(70, 170, 185)
 local COLOR_IDLE = Color3.fromRGB(90, 96, 100)
-local NOISE_RADIUS = 50
+local EMITTER = "RadioReceiver"
+-- What the receiver lets through when it crackles, by escalation stage.
+local PULSE_CUES: { [string]: string } = {
+	Aware = "RadioStaticBurst",
+	Hunting = "RadioInterference",
+	Hostile = "RadioWhisper",
+	FinalPursuit = "RadioVoice",
+}
+local PULSE_INTENSITY: { [string]: number } = {
+	Aware = 0.5,
+	Hunting = 0.7,
+	Hostile = 0.9,
+	FinalPursuit = 1.2,
+}
 
 local log = Logger.new("Radio")
 
@@ -40,7 +64,7 @@ function RadioSystem.play(steps: { Transmissions.Step }, origin: Vector3?, room:
 			NetService.fireAll("Subtitle", step.speaker or "", step.text, step.hold)
 		end
 		if step.cue then
-			NetService.fireAll("Sound", step.cue, origin)
+			AudioService.play(step.cue, origin)
 		end
 		if step.interference then
 			NetService.fireAll("Effect", "Interference", step.hold)
@@ -52,12 +76,10 @@ function RadioSystem.play(steps: { Transmissions.Step }, origin: Vector3?, room:
 	end
 end
 
-local function setAppearance(text: string, color: Color3, glowing: boolean)
-	local part = radio and WorldProps.partOf(radio)
-	if radio and part then
-		part.Color = color
-		part.Material = if glowing then Enum.Material.Neon else Enum.Material.Metal
-		WorldProps.setLabel(radio, text, color)
+local function setAppearance(status: string, color: Color3, glowing: boolean)
+	if radio then
+		WorldProps.setLook(radio, color, glowing)
+		WorldProps.setLabel(radio, Text.lines({ "LABEL_RECEIVER", status }), color)
 	end
 end
 
@@ -67,24 +89,40 @@ function RadioSystem.wake()
 		return
 	end
 	state = "Receiving"
+	log:info("The receiver has an incoming signal")
 	radio:SetAttribute("InteractEnabled", true)
-	setAppearance("RECEIVER\nINCOMING SIGNAL", COLOR_RECEIVING, true)
+	setAppearance("LABEL_RECEIVER_INCOMING", COLOR_RECEIVING, true)
+	AudioEmitters.setActive(EMITTER, true)
 	task.delay(4, function()
-		NetService.fireAll(
-			"Notify",
-			"A receiver has come back to life somewhere in the research corridors.",
-			"info"
-		)
+		NetService.fireAll("Notify", Text.ref("NOTIFY_RECEIVER_AWAKE"), "info")
 	end)
 end
 
+-- The receiver crackles by itself. `stage` is THE COPY's escalation stage: the further the
+-- mission has gone, the more comes through. Does nothing before the first transmission.
+function RadioSystem.pulse(stage: string)
+	local position = WorldProps.positionOf("Radio")
+	local cue = PULSE_CUES[stage]
+	if state ~= "Finished" or not position or not cue then
+		return
+	end
+	log:info(`The receiver crackles ({stage})`)
+	AudioEmitters.setIntensity(EMITTER, PULSE_INTENSITY[stage] or 0.5)
+	AudioService.play(cue, position)
+	local room = WorldService.zoneAt(position)
+	if room then
+		FacilityLights.flickerRooms({ room }, 1.2)
+	end
+end
+
 local function onListen(player: Player, _target: Instance, _id: string)
-	local part = radio and WorldProps.partOf(radio)
-	if not radio or not part or not SessionService.isPlaying() then
+	local position = WorldProps.positionOf("Radio")
+	if not radio or not position or not SessionService.isPlaying() then
 		return
 	end
 	if state == "Finished" then
-		NetService.fire("Subtitle", player, "RADIO", "[static]", 2)
+		NetService.fire("Subtitle", player, "SPEAKER_RADIO", "RADIO_STATIC", 2)
+		AudioService.playFor(player, "RadioStaticBurst", position)
 		return
 	elseif state ~= "Receiving" then
 		return
@@ -93,13 +131,15 @@ local function onListen(player: Player, _target: Instance, _id: string)
 	state = "Playing"
 	log:info(`Transmission started by {player.Name}`)
 	radio:SetAttribute("InteractEnabled", false)
-	NoiseService.emit(part.Position, NOISE_RADIUS)
-	RadioSystem.play(Transmissions.FirstContact, part.Position, WorldService.zoneAt(part.Position))
+	NoiseService.make("Radio", position)
+	RadioSystem.play(Transmissions.FirstContact, position, WorldService.zoneAt(position))
 
 	state = "Finished"
-	radio:SetAttribute("ActionText", "Listen again")
+	radio:SetAttribute("ActionText", "INTERACTION_LISTEN_AGAIN")
 	radio:SetAttribute("InteractEnabled", true)
-	setAppearance("RECEIVER\nNO SIGNAL", COLOR_IDLE, false)
+	setAppearance("LABEL_RECEIVER_NO_SIGNAL", COLOR_IDLE, false)
+	-- It keeps hissing quietly for the rest of the mission.
+	AudioEmitters.setIntensity(EMITTER, 0.4)
 	RadioSystem.finished:Fire()
 end
 
@@ -113,7 +153,7 @@ function RadioSystem.Start(_self: any)
 			log:warn("The radio was not placed: the transmission cannot be played")
 			return
 		end
-		setAppearance("RECEIVER\nOFFLINE", COLOR_IDLE, false)
+		setAppearance("LABEL_RECEIVER_OFFLINE", COLOR_IDLE, false)
 	end)
 end
 
