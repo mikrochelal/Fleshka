@@ -28,6 +28,7 @@ local Builder = require(script.Builder)
 local Layout = require(script.Layout)
 local LightingPreset = require(script.LightingPreset)
 local Plan = require(script.Plan)
+local DevOverlay = require(script.DevOverlay)
 local Shell = require(script.Shell)
 
 local GENERATED_ATTRIBUTE = "TLS_Generated"
@@ -302,6 +303,39 @@ function MapGenerator.restoreLighting(): boolean
 			else "The lighting preset is not applied - nothing changed."
 	)
 	return true
+end
+
+-- Shows floating labels over the generated map: room names and purposes, spawn and
+-- observation points, breaker panels, locked and powered doors. An editing aid: the
+-- labels live in Workspace.TLS_DevOverlay and are removed whenever the game runs.
+function MapGenerator.showOverlay(): boolean
+	local root = Workspace:FindFirstChild(layout.rootName)
+	if not root or not isGenerated(root) then
+		return refuse(`No generated Workspace.{layout.rootName} found.`)
+	end
+	waypoint("Before TLS overlay")
+	local count, problem = DevOverlay.show(root, layout)
+	waypoint("TLS overlay")
+	if problem then
+		return refuse(problem)
+	end
+	say(`{count} labels shown. Remove them with .hideOverlay()`)
+	return true
+end
+
+function MapGenerator.hideOverlay(): boolean
+	waypoint("Before TLS overlay removal")
+	local removed = DevOverlay.hide()
+	waypoint("TLS overlay removal")
+	say(if removed then "Overlay removed." else "No overlay to remove.")
+	return true
+end
+
+-- Prints every room with its zone, size and purpose. Changes nothing.
+function MapGenerator.listRooms()
+	for _, line in DevOverlay.roomLines(layout) do
+		print(line)
+	end
 end
 
 -- Prints what is currently in the place. Changes nothing.

@@ -23,6 +23,9 @@ stops. Open **View → Command Bar**, paste one line and press Enter.
 | Show ceilings and roof            | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).showCeilings()` |
 | Dark base lighting (optional)     | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).applyLightingPreset()` |
 | Undo the dark base lighting       | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).restoreLighting()` |
+| Label rooms, markers, locked doors | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).showOverlay()` |
+| Remove the labels                 | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).hideOverlay()` |
+| Print the room list               | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).listRooms()` |
 | See what exists                   | `require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).status()` |
 
 `:Clone()` makes Studio run the latest synced code rather than a cached copy.
@@ -140,33 +143,40 @@ still serving the old project.
 `Workspace.Station09_Custom`, not inside `Station09`. `regenerate()` moves the whole
 generated folder to the backups, including anything added inside it.
 
-## What is generated (layout v3)
+## Developer overlay
 
-One connected underground structure, 60 studs below the default Baseplate. An east-west
-spine corridor has rooms wall to wall on both sides and ends in a junction hall; one wing
-runs north to the laboratory, one south to the communication center. All space between and
-around the rooms is solid rock. Layout v3 keeps the v2 floor plan exactly; only the roof
-structure, materials and lamps changed.
+`showOverlay()` puts a floating label over every room (name, id, size, purpose, coloured by
+zone) and marks the spawn point, THE COPY's observation points, the breaker panels and every
+door that is meant to be locked or powered. Combined with `viewFromAbove()` it gives a
+labelled map of the whole station. `hideOverlay()` removes it.
 
-```text
-                                        Archive
-                                           |
-                            Airlock == MainLab -- SignalChamber
-                               |        |     |
-                               |   Observation ColdStorage
-              ServiceTunnel ---+
-                   |           | NorthCorridor
- Elevator  SecurityBooth  Office101 Storage102 MonitorRoom Records104
-    |          |              |         |           |          |
-  Lobby --- Checkpoint === MainCorridor ====================== Junction
-    |                         |         |           |          |
-  Lockers                PowerRoom  Maintenance  BreakRoom  Infirmary
-                               | SouthCorridor -- OperatorOffice
-                               |
-                          Antechamber =(code)= CommCenter -- ServerRoom
-                                                   |
-                                               RadioMast
-```
+The labels live in their own folder, `Workspace.TLS_DevOverlay`, never inside `Station09`,
+and the game removes that folder whenever it runs, so they cannot appear in play.
+`listRooms()` prints the same information to the Output window.
+
+## What is generated (layout v4)
+
+**55 rooms in eight zones** — the original 29 rooms, unchanged, plus 26 new ones. The full
+list with sizes, purposes and connections is in [ROOM_DIRECTORY.md](ROOM_DIRECTORY.md).
+
+| Zone | Folder | Rooms | Character |
+| ---- | ------ | ----- | --------- |
+| A Entrance | `A_Entrance` | 7 | Concrete, stable cold light |
+| B Corridors | `B_Corridors` | 13 | Concrete, muted cyan-white light |
+| C Laboratory | `C_Laboratory` | 8 | Lighter concrete, clinical light |
+| D Comm Center | `D_CommCenter` | 6 | Dark, low blue-grey light |
+| E Medical | `E_Medical` | 6 | Pale green-grey walls, weak cold light, red in quarantine |
+| F Archives | `F_Archives` | 5 | Old brick, low warm-grey light |
+| G Power | `G_Power` | 5 | Bare metal, warm electrical light |
+| H Containment | `H_Containment` | 5 | Corroded plating, minimal light, red in the deepest rooms |
+
+The station is one connected structure 60 studs below the default Baseplate. An east-west
+spine corridor ends in a junction hall; wings run north (laboratory, archives), east
+(medical), and south (communication center). The power wing lies south of the spine and
+leads west through a pipe tunnel to the freight and containment wing, which connects back to
+the lobby through a restricted gate. All space between rooms is solid rock.
+
+Above every doorway, on both sides, the wall carries the name of the room beyond it.
 
 ```text
 Workspace.Station09            (attributes: TLS_Generated, TLS_GeneratorVersion, TLS_CeilingsHidden)
@@ -175,16 +185,17 @@ Workspace.Station09            (attributes: TLS_Generated, TLS_GeneratorVersion,
                                PowerRoom, Maintenance, BreakRoom, Infirmary, Junction,
                                NorthCorridor, SouthCorridor, ServiceTunnel
   C_Laboratory/                Airlock, MainLab, SignalChamber, Archive, Observation, ColdStorage
-  D_CommCenter/                OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast
+  D_CommCenter/                OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast, ...
+  E_Medical/ F_Archives/ G_Power/ H_Containment/   (see ROOM_DIRECTORY.md)
     <Room>/
       Floor, Ceiling           (Ceiling: tag TLS_Overhead)
-      Walls/                   Wall_<side>_<n>, Lintel_<side>_<n>
+      Walls/                   Wall_<side>_<n>, Lintel_<side>_<n> (Lintels carry a Sign SurfaceGui)
       Lights/                  Light_<n>  (PointLight inside; tag TLS_Light, attribute Circuit)
       Zone                     invisible room volume (tag TLS_Zone, attributes Area, ZoneId)
       Props/                   Placeholder_* boxes and BreakerPanel_* (tag TLS_BreakerPanel)
   Doors/                       Door_<RoomA>_<RoomB> models: Frame/ (Jamb_1, Jamb_2, Header,
                                Threshold) + Panel (tag TLS_Door; attributes DoorId,
-                               RequiresPower, Locked)
+                               RequiresPower, Locked, RoomA, RoomB)
   Archways/                    Archway_<RoomA>_<RoomB> models: Frame/ only (open passages)
   Shell/
     Rock/                      Rock_<n> - structural fill between rooms, up to the lowest ceiling
@@ -211,9 +222,10 @@ Draft conventions:
 ## Inspecting the result
 
 1. Run `viewFromAbove()`. The ceilings are hidden and the camera looks straight down.
+   Run `showOverlay()` to label every room.
 2. If the Output says something is above the station, frame rooms one at a time, for
-   example `viewFromAbove("MainCorridor")`, `viewFromAbove("MainLab")`,
-   `viewFromAbove("CommCenter")`.
+   example `viewFromAbove("MainCorridor")`, `viewFromAbove("GeneratorHall")`,
+   `viewFromAbove("SignalSource")`, `viewFromAbove("MedCorridor")`.
 3. To work inside a room: click its folder in Explorer (for example
    `B_Corridors → B_MainCorridor`) and press **F**.
 4. To walk through it: move the camera into `A_Elevator`, right-click the floor and choose
@@ -226,8 +238,9 @@ an edge. Then:
 
 1. Run `scripts/check.sh` — `tests/map.luau` verifies that no two solid parts overlap, every
    passage is clear, and a character-sized flood fill from the spawn point reaches every
-   room, marker and doorway. It also pins the reference floor plan: after an intended
-   change, update the two checksums in that test.
+   room, marker and doorway. It also pins the original 29 rooms and 30 connections:
+   add new rooms and connections only after them, and give every room an entry in
+   `purposes`.
 2. Increase `version` in `Layout.luau`.
 3. Run `regenerate()` in Studio.
 
@@ -238,4 +251,5 @@ an edge. Then:
 | `Shell.luau`   | Rock fill, rock caps, roof sections (no Roblox API; tested)   |
 | `Builder.luau` | Creates the Roblox instances, materials and lights            |
 | `LightingPreset.luau` | Optional, reversible dark base lighting                |
+| `DevOverlay.luau` | Room labels and the room list                              |
 | `init.luau`    | Commands and safety rules                                     |

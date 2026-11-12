@@ -62,6 +62,15 @@ Progress is session-based: nothing persists between sessions except client setti
 | C. Experimental Laboratory | Lore core                       | Signal chamber, tape archive, evacuation mess | Frequency puzzle, recordings, code clues |
 | D. Communication Center   | Climax                          | Radio mast base, central computer, keypad door | Security code, final transmission, escape |
 
+Layout v4 adds four more zones to the table above (rooms in `docs/ROOM_DIRECTORY.md`):
+
+| Area | Purpose | Landmarks | Planned gameplay |
+| ---- | ------- | --------- | ---------------- |
+| E. Medical and quarantine | What happened to exposed staff | Quarantine seal, isolation chamber | Examination logs, a close encounter |
+| F. Archives | The story, for those who look | Brick corridor, restricted archive | Archive code puzzle, recordings, personnel files |
+| G. Power and maintenance | First major puzzle | Generator hall, switchgear | Power restoration moves here from zone B |
+| H. Freight and containment | The deepest part; the ending | Cargo corridor, signal source | Containment access puzzle, signal source, freight-elevator escape |
+
 Layout is a loop with one-way shortcuts that unlock as power returns, so the escape route
 runs back through familiar, now-changed spaces. Each area has one dominant colour accent
 (red emergency, cyan monitors, cold white lab light) for orientation.
@@ -241,7 +250,7 @@ server ──events──▶ clients: Notify, Subtitle, ShowDocument, Effect, So
   it did not create. The floor plan is data in `Layout.luau`; final decoration, lighting
   mood and hand-made props are added in Studio on top of the draft.
 
-### Draft floor plan (layout v2 plan, generator v3)
+### Floor plan (layout v4: original 29 rooms plus 26)
 
 One connected structure carved out of rock: an east-west spine corridor with rooms wall to
 wall on both sides, a junction hall at its east end, a north wing (laboratory) and a south
@@ -253,7 +262,11 @@ The diagram and the full folder structure are in `docs/MAP_GENERATOR.md`.
 | A. Entrance      | Elevator, Lobby, SecurityBooth, Checkpoint, Lockers |
 | B. Corridors     | MainCorridor, Office101, Storage102, MonitorRoom, Records104, PowerRoom, Maintenance, BreakRoom, Infirmary, Junction, NorthCorridor, SouthCorridor, ServiceTunnel |
 | C. Laboratory    | Airlock, MainLab, SignalChamber, Archive, Observation, ColdStorage |
-| D. Comm Center   | OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast |
+| D. Comm Center   | OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast, RadioControl |
+| E. Medical       | MedCorridor, MedReception, Examination, QuarantineCorridor, PatientRoom, IsolationChamber |
+| F. Archives      | ArchiveCorridor, DocumentArchive, TapeStorage, PersonnelRecords, RestrictedArchive |
+| G. Power         | ServiceCorridor, GeneratorHall, ElectricalControl, Ventilation, PipeTunnel |
+| H. Containment   | CargoCorridor, FreightElevator, Checkpoint, ObservationChamber, SignalSource |
 
 ## 12. Playable slice (version 0.3.0)
 

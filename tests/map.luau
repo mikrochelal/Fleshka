@@ -80,19 +80,54 @@ for _, area in Layout.areas do
 end
 
 -- The reference floor plan must not drift: room footprints and connections are pinned.
+-- The original station (layout v3) is the first 29 rooms and 30 connections.
+local ORIGINAL_ROOMS, ORIGINAL_CONNECTIONS = 29, 30
 local footprintSum, connectionSum = 0, 0
-for index, room in Layout.rooms do
+for index = 1, ORIGINAL_ROOMS do
+	local room = Layout.rooms[index]
 	footprintSum += index * (room.x0 + 2 * room.x1 + 3 * room.z0 + 5 * room.z1 + 7 * room.height)
 end
-for index, connection in Layout.connections do
+for index = 1, ORIGINAL_CONNECTIONS do
+	local connection = Layout.connections[index]
 	connectionSum += index * (connection.at + 3 * connection.width)
 end
 check(
-	"reference floor plan: 29 rooms, 30 connections",
-	#Layout.rooms == 29 and #Layout.connections == 30
+	"expanded station: 55 rooms, 59 connections",
+	#Layout.rooms == 55 and #Layout.connections == 59
 )
 check(`reference floor plan: room footprints unchanged ({footprintSum})`, footprintSum == 361936)
 check(`reference floor plan: connections unchanged ({connectionSum})`, connectionSum == 66752)
+
+check("eight areas", #Layout.areas == 8)
+local originalNames =
+	{ "A_Elevator", "A_Lobby", "B_MainCorridor", "C_MainLab", "D_CommCenter", "D_RadioMast" }
+for _, name in originalNames do
+	local found = false
+	for index = 1, ORIGINAL_ROOMS do
+		found = found or Layout.rooms[index].name == name
+	end
+	check(`original room {name} is still among the first {ORIGINAL_ROOMS}`, found)
+end
+for _, room in Layout.rooms do
+	local purpose = Layout.purposes[room.name]
+	check(`{room.name}: has a documented purpose`, type(purpose) == "string" and #purpose > 10)
+end
+
+-- Door signs: every doorway is labelled on both sides with the room beyond it.
+local signCount = 0
+for _, roomPlan in plan.rooms do
+	for _, box in roomPlan.walls do
+		if box.sign then
+			signCount += 1
+			check(
+				`{roomPlan.room.name}/{box.name}: sign names another room`,
+				box.sign ~= roomPlan.room.name and Layout.purposes[box.sign] ~= nil
+			)
+			check(`{roomPlan.room.name}/{box.name}: sign has a face`, box.face ~= nil)
+		end
+	end
+end
+check(`two signs per connection ({signCount})`, signCount == 2 * #Layout.connections)
 
 -- Geometry of every room.
 local walls = {}
@@ -204,7 +239,7 @@ check(
 	"rock and rooms together fill the bounds exactly",
 	math.abs(roomArea + rockArea - boundsArea) < 1e-3
 )
-check("rock is merged into a modest number of blocks", #shell.rock > 0 and #shell.rock <= 120)
+check("rock is merged into a modest number of blocks", #shell.rock > 0 and #shell.rock <= 300)
 
 -- Ceiling system: structural rock stops at the lowest ceiling, so with the overhead parts
 -- hidden nothing stands above any room's walls; the overhead parts are per-section.

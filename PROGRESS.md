@@ -17,12 +17,45 @@ _Last updated: 2026-11-12 — version 0.3.0 (playable slice)_
 | ---------------------------- | ----- |
 | Project foundation, tooling  | Tested in Studio |
 | Core systems (net, session, players, interaction) | Partially tested in Studio |
-| Draft map generator (layout v3) | Tested in Studio by the owner (generation, top view, ceilings, lighting preset) |
-| Playable slice v0.3.0 (everything in the next section) | Implemented; static checks and unit tests pass; **Not tested in Studio** |
+| Map generator, layout v3 (29 rooms) | Tested in Studio by the owner (generation, top view, ceilings, lighting preset) |
+| Map generator, layout v4 (55 rooms, 8 zones) | Implemented; unit tested; **Not tested in Studio** |
+| Playable slice v0.3.0 (everything in the next section) | **Partially tested** — the owner saw the objective panel, document reader, stamina and battery indicators and interactions working in Studio; the rest is unverified |
 | Main menu, lobby, party system, settings | Not implemented |
 | Frequency and security-code puzzles | Not implemented |
 | Door system (doors are walk-through) | Not implemented |
 | Audio assets                 | Blocked — no verified assets chosen; every cue id is empty |
+
+## Production milestones (the "ultimate" brief)
+
+| # | Milestone | State |
+| - | --------- | ----- |
+| 1 | Full technical audit | Done |
+| 2 | Expanded station | **Done in code**: 55 rooms, 8 zones, original 29 preserved; needs Studio verification |
+| 3 | Visual transformation | **Started**: per-zone wall materials and lamp tones, door signs. Not done: props and decoration, pipes, fog and post-processing, per-zone Lighting, graphics fallback |
+| 4 | Core gameplay | Slice exists. Not done: first-person camera, working doors |
+| 5 | Puzzles and story | Power puzzle and 3 documents exist. Not done: frequency, archive code and containment puzzles; the 12 lore discoveries; the longer objective chain through the new wings |
+| 6 | THE COPY | Six-state version exists. Not done: stalking state, field of view, new silhouette, animation |
+| 7 | Cinematic horror | One scripted sighting exists. Not done: the other scare types, camera impulses |
+| 8 | Final presentation | Not done: menu, lobby, settings, pause, credits, volume groups |
+| 9 | Testing | Static only; Studio testing is the owner's |
+
+The new wings are **architecture without gameplay**: they can be walked and are lit and
+labelled, but nothing in them is interactive yet, and the mission still runs through the
+original rooms.
+
+## Expanded station — layout v4
+
+| Item | Status |
+| ---- | ------ |
+| 26 new rooms appended; original 29 rooms and 30 connections pinned by checksum | Implemented; unit tested |
+| 59 connections; every room reachable by a character-sized flood fill; no overlapping solids (a blocked door found by this test was fixed) | Unit tested |
+| Zones E Medical, F Archives, G Power, H Containment with own materials and lamps | Implemented; appearance **Not tested** |
+| Door signs (room name above each doorway, both sides) | Implemented; sign data unit tested; rendering and orientation **Not tested** |
+| Placeholder landmarks in new rooms (generator, signal core, cells, shelves…) | Implemented; placement unit tested |
+| THE COPY observation points in new wings (7 more) | Implemented; unit tested for reachability |
+| Lighting circuits E–H dead until power is restored | Implemented; **Not tested** |
+| Developer overlay: `showOverlay`, `hideOverlay`, `listRooms`; removed automatically in play | Implemented; **Not tested** |
+| Room directory | `docs/ROOM_DIRECTORY.md`, generated from the layout |
 
 ## Playable slice — version 0.3.0
 

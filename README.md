@@ -120,6 +120,7 @@ These are static checks; gameplay is verified in Studio using
 
 ## Documentation
 
+- [docs/ROOM_DIRECTORY.md](docs/ROOM_DIRECTORY.md) — all 55 rooms of STATION-09
 - [GAME_DESIGN_DOCUMENT.md](GAME_DESIGN_DOCUMENT.md) — design and technical architecture
 - [PROJECT_PLAN.md](PROJECT_PLAN.md) — roadmap
 - [PROGRESS.md](PROGRESS.md) — what is actually implemented and tested

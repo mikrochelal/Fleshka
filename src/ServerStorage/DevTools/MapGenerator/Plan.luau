@@ -66,11 +66,16 @@ export type Layout = {
 	connections: { Connection },
 	props: { Prop },
 	markers: { Marker },
+	purposes: { [string]: string },
 }
 
 -- Centre and size, in layout space.
 export type Box = {
 	name: string,
+	-- Set on the wall piece above a doorway: the room the doorway leads to, and the face
+	-- of the piece that looks into this room ("Front" -Z, "Back" +Z, "Left" -X, "Right" +X).
+	sign: string?,
+	face: string?,
 	x: number,
 	y: number,
 	z: number,
@@ -104,7 +109,10 @@ export type PassagePlan = {
 export type Result = { rooms: { RoomPlan }, passages: { PassagePlan } }
 
 -- An opening in one side of a room: side is "N" (z0), "S" (z1), "W" (x0) or "E" (x1).
-type Opening = { lo: number, hi: number }
+type Opening = { lo: number, hi: number, to: string? }
+
+-- Face of a wall piece that looks into the room, by the side of the room it is on.
+local INWARD_FACE: { [string]: string } = { N = "Back", S = "Front", W = "Right", E = "Left" }
 type Edge = { axis: string, line: number, lo: number, hi: number, sideA: string, sideB: string }
 
 local DOOR_THICKNESS = 0.4
@@ -347,7 +355,12 @@ local function wallBoxes(layout: Layout, room: Room, side: string, openings: { O
 	local cursor = spanLo
 	for _, opening in sorted do
 		add("Wall", cursor, opening.lo, 0, room.height)
+		local before = #boxes
 		add("Lintel", opening.lo, opening.hi, layout.doorHeight, room.height)
+		if #boxes > before and opening.to then
+			boxes[#boxes].sign = opening.to
+			boxes[#boxes].face = INWARD_FACE[side]
+		end
 		cursor = opening.hi
 	end
 	add("Wall", cursor, spanHi, 0, room.height)
@@ -394,10 +407,12 @@ function Plan.build(layout: Layout): Result
 		local a, b = byName[connection.a], byName[connection.b]
 		local edge = sharedEdge(a, b) :: Edge
 		local lo, hi = connection.at - connection.width / 2, connection.at + connection.width / 2
-		for _, key in { `{a.name}/{edge.sideA}`, `{b.name}/{edge.sideB}` } do
-			openings[key] = openings[key] or {}
-			table.insert(openings[key], { lo = lo, hi = hi })
-		end
+		-- Each room gets the opening in its own wall, labelled with the room beyond it.
+		local keyA, keyB = `{a.name}/{edge.sideA}`, `{b.name}/{edge.sideB}`
+		openings[keyA] = openings[keyA] or {}
+		openings[keyB] = openings[keyB] or {}
+		table.insert(openings[keyA], { lo = lo, hi = hi, to = b.name })
+		table.insert(openings[keyB], { lo = lo, hi = hi, to = a.name })
 
 		-- A box in the opening: `along` runs along the shared edge, `across` through the walls.
 		local alongZ = edge.axis == "x"
