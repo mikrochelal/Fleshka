@@ -57,8 +57,8 @@ rojo plugin install
 3. Нажмите **Play**. В окне **Output** (View → Output) должны появиться строки:
 
 ```text
-[TLS:Server] THE LAST SIGNAL v0.1.0 started: 0 services, 0 systems
-[TLS:Client] Client started: 0 controllers
+[TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 2 systems
+[TLS:Client] Client started: 1 controllers
 ```
 
 Если строки появились — всё работает.

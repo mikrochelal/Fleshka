@@ -6,7 +6,7 @@ In 1998 the underground research facility STATION-09 went silent after transmitt
 sentence: *"IT KNOWS WE ARE LISTENING."* Years later a new signal appears, and a team is sent
 down to find out why.
 
-> **Status:** early development — project foundation only. See [PROGRESS.md](PROGRESS.md).
+> **Status:** early development — foundation and core systems. See [PROGRESS.md](PROGRESS.md).
 > Пошаговая инструкция на русском: [docs/SETUP_RU.md](docs/SETUP_RU.md).
 
 ## How the project is organised
@@ -33,7 +33,8 @@ src/
   StarterPlayer/StarterPlayerScripts/
     ClientBootstrap.client.luau   The only LocalScript
     Controllers/          Client behaviour and UI
-scripts/check.sh          Static validation
+scripts/check.sh          Static validation + unit tests
+tests/                    Unit tests for pure-logic modules (Luau CLI)
 ```
 
 ## Setup
@@ -58,8 +59,8 @@ scripts/check.sh          Static validation
 6. Open your place in Roblox Studio → **Plugins** tab → **Rojo** → **Connect**.
 7. Press **Play**. The Output window should show:
    ```text
-   [TLS:Server] THE LAST SIGNAL v0.1.0 started: 0 services, 0 systems
-   [TLS:Client] Client started: 0 controllers
+   [TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 2 systems
+   [TLS:Client] Client started: 1 controllers
    ```
 
 Official Rojo documentation: <https://rojo.space/docs/v7/>.
@@ -78,7 +79,9 @@ Studio-built content is not in Git. After every building session:
 scripts/check.sh
 ```
 
-Runs the Workspace safety guard, `rojo build`, StyLua, Selene and Luau type analysis.
+Runs the Workspace safety guard, `rojo build`, StyLua, Selene, Luau type analysis and the
+unit tests in `tests/` (these need the [Luau CLI](https://github.com/luau-lang/luau/releases);
+without it the script reports them as skipped).
 These are static checks; gameplay is verified in Studio using
 [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md).
 
