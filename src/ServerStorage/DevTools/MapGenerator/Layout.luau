@@ -20,7 +20,7 @@ local PUZZLE = "puzzle"
 
 return {
 	-- Bumped whenever the generated result changes; stored on the generated map.
-	version = 2,
+	version = 3,
 
 	rootName = "Station09",
 

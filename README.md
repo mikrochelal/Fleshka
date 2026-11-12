@@ -61,7 +61,7 @@ tests/                    Unit tests for pure-logic modules (Luau CLI)
 6. Open your place in Roblox Studio → **Plugins** tab → **Rojo** → **Connect**.
 7. Press **Play**. The Output window should show:
    ```text
-   [TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 2 systems
+   [TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 3 systems
    [TLS:Client] Client started: 1 controllers
    ```
 

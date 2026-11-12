@@ -57,7 +57,7 @@ rojo plugin install
 3. Нажмите **Play**. В окне **Output** (View → Output) должны появиться строки:
 
 ```text
-[TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 2 systems
+[TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 3 systems
 [TLS:Client] Client started: 1 controllers
 ```
 
@@ -121,27 +121,54 @@ rojo plugin install
 4. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
 5. В Explorer выберите `Workspace → Station09` и нажмите **F**. Карта находится под
    Baseplate — опустите камеру ниже.
-6. Скройте потолки и крышу, чтобы видеть комнаты сверху и выделять объекты внутри:
+6. Посмотрите на станцию сверху. Команда сама скрывает потолки и ставит камеру над картой:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).viewFromAbove()
+   ```
+
+   Над станцией находится Baseplate, и камера не видит сквозь него, поэтому вся станция в
+   кадр может не поместиться — об этом будет строка в Output. Тогда смотрите по комнатам:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).viewFromAbove("MainCorridor")
+   ```
+
+   Подходят имена комнат из Explorer без префикса зоны: `Lobby`, `MainCorridor`,
+   `Junction`, `MainLab`, `CommCenter` и другие.
+7. Скрыть или вернуть потолки отдельно:
 
    ```lua
    require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).hideCeilings()
    ```
 
-   Вернуть их:
-
    ```lua
    require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).showCeilings()
    ```
 
-   Перед тестом игры потолки нужно вернуть — скрытые потолки остаются скрытыми и в игре.
-7. Чтобы осмотреть одну комнату: выберите её папку в Explorer (например
-   `B_Corridors → B_MainCorridor`) и нажмите **F**.
-8. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
+   Скрываются только потолки, секции крыши и верхняя часть скалы. Полы, стены и дверные
+   рамы не меняются. При запуске игры потолки показываются автоматически.
+8. По желанию — тёмное базовое освещение (убирает солнце и свет неба, чтобы комнаты
+   освещались только своими лампами):
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).applyLightingPreset()
+   ```
+
+   Вернуть прежнее освещение:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).restoreLighting()
+   ```
+
+9. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
    кнопкой по полу → **Play Here**.
 
 Правила безопасности инструмента:
 
-- Он создаёт только `Workspace.Station09` и больше ничего не трогает.
+- `generate()` и `regenerate()` создают только `Workspace.Station09` и больше ничего не
+  трогают. Камеру редактора двигает только `viewFromAbove()`, а свойства `Lighting` меняет
+  только `applyLightingPreset()` — и это отменяется командой `restoreLighting()`.
 - Повторный `generate()` ничего не меняет.
 - `regenerate()` не удаляет старую карту, а переносит её в `ServerStorage.TLS_MapBackups`.
 - Одинаковая планировка всегда даёт одинаковую карту с теми же именами объектов.
