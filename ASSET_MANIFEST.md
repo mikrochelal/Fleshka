@@ -15,8 +15,8 @@ Roblox materials and `PointLight`s. Everything it creates is a placeholder:
 
 | Generated content                                   | Status      | Replace with                              |
 | --------------------------------------------------- | ----------- | ----------------------------------------- |
-| Floors, walls, ceilings (blockout)                  | Placeholder | Final architecture / textured geometry    |
-| Door panels (half-transparent, walk-through)        | Placeholder | Door models driven by the door system     |
+| Floors, walls, ceilings, rock shell and roof (blockout) | Placeholder | Final architecture / textured geometry |
+| Door frames (jambs, header, threshold) and half-transparent walk-through door panels | Placeholder | Door models driven by the door system |
 | Ceiling light fixtures (neon boxes)                 | Placeholder | Final fixtures and lighting design        |
 | `Placeholder_*` boxes (desk, lockers, generator, monitor wall, lab benches, receiver, tape shelves, keypad, central computer, radio station, server racks, mast base, main lever) | Placeholder | Final props / puzzle models |
 | `BreakerPanel_1..3` boxes                           | Placeholder | Breaker panel models for the power puzzle |

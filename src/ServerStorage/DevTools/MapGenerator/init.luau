@@ -1,6 +1,6 @@
 --!strict
 -- STATION-09 draft map generator. A development tool: it is never required by game code and
--- does nothing until it is called by hand from the Studio Command Bar (game stopped):
+-- does nothing until it is called by hand from the Studio Command Bar, in Edit mode:
 --
 --   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).generate()
 --
@@ -11,9 +11,10 @@
 --   * generate() changes nothing if `Workspace.Station09` already exists.
 --   * regenerate() never deletes: the previous generated map is moved to
 --     `ServerStorage.TLS_MapBackups`. A `Station09` that this tool did not create is refused.
+--   * The same layout always produces the same map, with the same names.
 --
--- Files: Layout.luau (the floor plan - edit this), Plan.luau (geometry math),
--- Builder.luau (instance creation).
+-- Files: Layout.luau (the floor plan - edit this), Plan.luau (rooms, walls, passages),
+-- Shell.luau (rock fill and roof), Builder.luau (instance creation).
 
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local RunService = game:GetService("RunService")
@@ -23,9 +24,11 @@ local Workspace = game:GetService("Workspace")
 local Builder = require(script.Builder)
 local Layout = require(script.Layout)
 local Plan = require(script.Plan)
+local Shell = require(script.Shell)
 
 local GENERATED_ATTRIBUTE = "TLS_Generated"
 local VERSION_ATTRIBUTE = "TLS_GeneratorVersion"
+local CEILINGS_HIDDEN_ATTRIBUTE = "TLS_CeilingsHidden"
 local BACKUP_FOLDER = "TLS_MapBackups"
 local PREFIX = "[TLS:MapGenerator]"
 
@@ -61,15 +64,42 @@ local function checkLayout(): boolean
 	return #problems == 0
 end
 
-local function build(): boolean
-	local root, summary = Builder.build(layout, Plan.build(layout))
+-- Hidden ceilings are also locked, so clicks in the viewport pass through to the interior.
+local function applyCeilings(root: Instance, visible: boolean): number
+	local count = 0
+	for _, descendant in root:GetDescendants() do
+		if descendant:IsA("BasePart") and descendant:GetAttribute(Builder.OVERHEAD_ATTRIBUTE) then
+			descendant.Transparency = if visible then 0 else 1
+			descendant.Locked = not visible
+			descendant.CastShadow = visible
+			count += 1
+		end
+	end
+	root:SetAttribute(CEILINGS_HIDDEN_ATTRIBUTE, not visible)
+	return count
+end
+
+local function build(ceilingsHidden: boolean): boolean
+	local tallest = 0
+	local footprints: { Shell.Rect } = {}
+	for _, room in layout.rooms do
+		tallest = math.max(tallest, room.height)
+		table.insert(footprints, { x0 = room.x0, x1 = room.x1, z0 = room.z0, z1 = room.z1 })
+	end
+	local slab = layout.slabThickness
+	-- Rock reaches from under the floors to above the tallest ceiling; the roof caps it.
+	local shell = Shell.build(footprints, layout.shellMargin, -slab, tallest + slab, slab)
+
+	local root, summary = Builder.build(layout, Plan.build(layout), shell)
 	root:SetAttribute(GENERATED_ATTRIBUTE, true)
 	root:SetAttribute(VERSION_ATTRIBUTE, layout.version)
+	applyCeilings(root, not ceilingsHidden)
 	root.Parent = Workspace
 
 	say(
 		`Created Workspace.{layout.rootName}: {summary.rooms} rooms, {summary.doors} doors, `
-			.. `{summary.lights} lights, {summary.parts} parts (layout v{layout.version})`
+			.. `{summary.archways} archways, {summary.lights} lights, {summary.parts} parts `
+			.. `(layout v{layout.version}, ceilings {if ceilingsHidden then "hidden" else "shown"})`
 	)
 	return true
 end
@@ -97,13 +127,13 @@ function MapGenerator.generate(): boolean
 	end
 
 	waypoint("Before TLS map generation")
-	local ok = build()
+	local ok = build(false)
 	waypoint("TLS map generation")
 	return ok
 end
 
--- Rebuilds the draft map. The previous generated map is moved to
--- ServerStorage.TLS_MapBackups, never deleted.
+-- Rebuilds the draft map from the current layout. The previous generated map is moved to
+-- ServerStorage.TLS_MapBackups, never deleted. Ceilings stay hidden if they were hidden.
 function MapGenerator.regenerate(): boolean
 	if RunService:IsRunning() then
 		return refuse("Stop the game first: changes made while playing are lost.")
@@ -120,38 +150,51 @@ function MapGenerator.regenerate(): boolean
 	end
 
 	waypoint("Before TLS map regeneration")
+	local ceilingsHidden = false
 	if existing then
+		ceilingsHidden = existing:GetAttribute(CEILINGS_HIDDEN_ATTRIBUTE) == true
+
 		local backups = ServerStorage:FindFirstChild(BACKUP_FOLDER)
 		if not backups then
 			backups = Instance.new("Folder")
 			backups.Name = BACKUP_FOLDER
 			backups.Parent = ServerStorage
 		end
-		local backupName = `{layout.rootName}_backup_{os.date("%Y%m%d_%H%M%S")}`
+		local version = existing:GetAttribute(VERSION_ATTRIBUTE)
+		local backupName =
+			`{layout.rootName}_v{tostring(version)}_backup_{os.date("%Y%m%d_%H%M%S")}`
 		existing.Name = backupName
 		existing.Parent = backups
 		say(`Previous map moved to ServerStorage.{BACKUP_FOLDER}.{backupName}`)
 	end
-	local ok = build()
+	local ok = build(ceilingsHidden)
 	waypoint("TLS map regeneration")
 	return ok
 end
 
--- Shows or hides the ceilings of the generated map so the layout can be viewed from above.
+-- Shows or hides every ceiling and the roof of the generated map, so interiors can be seen
+-- and edited from above. Hidden ceilings do not block clicks in the viewport.
 function MapGenerator.setCeilingsVisible(visible: boolean): boolean
 	local root = Workspace:FindFirstChild(layout.rootName)
 	if not root or not isGenerated(root) then
 		return refuse(`No generated Workspace.{layout.rootName} found.`)
 	end
-	local count = 0
-	for _, descendant in root:GetDescendants() do
-		if descendant:IsA("BasePart") and descendant.Name == "Ceiling" then
-			descendant.Transparency = if visible then 0 else 1
-			count += 1
-		end
+	waypoint("Before TLS ceilings change")
+	local count = applyCeilings(root, visible)
+	waypoint("TLS ceilings change")
+	say(`{count} ceiling and roof parts {if visible then "shown" else "hidden"}`)
+	if not visible then
+		say("Remember to show them again before playtesting: .showCeilings()")
 	end
-	say(`{count} ceilings {if visible then "shown" else "hidden"}`)
 	return true
+end
+
+function MapGenerator.hideCeilings(): boolean
+	return MapGenerator.setCeilingsVisible(false)
+end
+
+function MapGenerator.showCeilings(): boolean
+	return MapGenerator.setCeilingsVisible(true)
 end
 
 -- Prints what is currently in the place. Changes nothing.
@@ -169,9 +212,12 @@ function MapGenerator.status()
 			end
 		end
 		local version = root:GetAttribute(VERSION_ATTRIBUTE)
+		local hidden = root:GetAttribute(CEILINGS_HIDDEN_ATTRIBUTE) == true
 		say(
-			`Workspace.{layout.rootName}: generated from layout v{tostring(version)}, {parts} parts. `
-				.. `Current layout is v{layout.version}.`
+			`Workspace.{layout.rootName}: generated from layout v{tostring(version)}, {parts} parts, `
+				.. `ceilings {if hidden then "hidden" else "shown"}. `
+				.. `Current layout is v{layout.version}`
+				.. `{if version ~= layout.version then " - run .regenerate() to update." else "."}`
 		)
 	end
 
