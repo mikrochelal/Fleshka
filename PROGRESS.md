@@ -45,12 +45,13 @@ Phase 2 is complete only after checklist section "Phase 2" is run in Studio.
 
 | Item                                                      | Status                                         |
 | --------------------------------------------------------- | ---------------------------------------------- |
-| Layout data: 22 rooms in 4 areas, 23 connections          | Implemented; unit tested (Luau CLI): no overlapping rooms, every room reachable, props and markers inside rooms |
-| Geometry math (walls split around openings, lintels, lights, doors) | Implemented; unit tested (Luau CLI): every doorway and archway is open, walls do not overlap |
-| Instance builder (parts, materials, lights, tags)         | Implemented; static checks; **Not tested** — has never run in Studio |
-| Commands: `generate`, `regenerate`, `status`, `setCeilingsVisible` | Implemented; static checks; **Not tested** in Studio |
-| Safety: idempotent generate, backup instead of delete, refusal for foreign content | Implemented; **Not tested** in Studio |
-| Rojo mapping `ServerStorage.TLS_DevTools`                 | Implemented; `rojo build` verified; **Not tested** with live sync |
+| Layout v2: 29 rooms in 4 areas, 30 connections, one connected structure | Implemented; unit tested (Luau CLI): no overlapping rooms, every room reachable, props and markers inside rooms |
+| Geometry math (walls split around openings, lintels, lights, door frames) | Implemented; unit tested (Luau CLI): every passage is clear for a character, frames and walls do not overlap |
+| Rock shell and roof (`Shell.luau`)                        | Implemented; unit tested (Luau CLI): rock and rooms fill the footprint exactly, rock never intrudes into a room |
+| Instance builder (parts, materials, lights, tags)         | Layout v1 **Partially tested** — the owner generated and viewed the v1 map in Studio; v2 additions (frames, shell, new rooms) **Not tested** in Studio |
+| Commands: `generate`, `regenerate`, `status`, `hideCeilings`, `showCeilings` | `generate` ran in Studio on v1; the rest **Not tested** in Studio |
+| Safety: idempotent generate, backup instead of delete, refusal for foreign content, deterministic output | Implemented; determinism unit tested; the rest **Not tested** in Studio |
+| Rojo mapping `ServerStorage.TLS_DevTools`                 | **Tested** — verified against a live `rojo serve` tree; synced to the owner's Studio |
 
 The generated map is a draft blockout: no final lighting mood, fog, sound, decoration or
 working doors. Doors are walk-through placeholders until the door system exists.

@@ -3,6 +3,9 @@
 
 local Layout = require("../src/ServerStorage/DevTools/MapGenerator/Layout")
 local Plan = require("../src/ServerStorage/DevTools/MapGenerator/Plan")
+local Shell = require("../src/ServerStorage/DevTools/MapGenerator/Shell")
+
+local EPSILON = 1e-6
 
 local failures = 0
 local total = 0
@@ -26,11 +29,37 @@ local function deepCopy(value: any): any
 	return copy
 end
 
+local function deepEqual(a: any, b: any): boolean
+	if type(a) ~= "table" or type(b) ~= "table" then
+		return a == b
+	end
+	for key, item in a do
+		if not deepEqual(item, b[key]) then
+			return false
+		end
+	end
+	for key in b do
+		if a[key] == nil then
+			return false
+		end
+	end
+	return true
+end
+
+-- True when two boxes share volume; touching faces do not count.
 local function overlaps(a: any, b: any): boolean
-	local epsilon = 1e-6
-	return math.abs(a.x - b.x) < (a.sx + b.sx) / 2 - epsilon
-		and math.abs(a.y - b.y) < (a.sy + b.sy) / 2 - epsilon
-		and math.abs(a.z - b.z) < (a.sz + b.sz) / 2 - epsilon
+	return math.abs(a.x - b.x) < (a.sx + b.sx) / 2 - EPSILON
+		and math.abs(a.y - b.y) < (a.sy + b.sy) / 2 - EPSILON
+		and math.abs(a.z - b.z) < (a.sz + b.sz) / 2 - EPSILON
+end
+
+local function buildShell(layout: any)
+	local tallest = 0
+	for _, room in layout.rooms do
+		tallest = math.max(tallest, room.height)
+	end
+	local slab = layout.slabThickness
+	return Shell.build(layout.rooms, layout.shellMargin, -slab, tallest + slab, slab)
 end
 
 -- The shipped layout is valid.
@@ -41,15 +70,10 @@ end
 check("shipped layout has no problems", #problems == 0)
 
 local plan = Plan.build(Layout)
+local shell = buildShell(Layout)
 
-local doorConnections = 0
-for _, connection in Layout.connections do
-	if connection.door then
-		doorConnections += 1
-	end
-end
 check("one room plan per room", #plan.rooms == #Layout.rooms)
-check("one door per door connection", #plan.doors == doorConnections)
+check("one passage per connection", #plan.passages == #Layout.connections)
 
 -- All four required areas contain rooms.
 local roomsPerArea = {}
@@ -61,7 +85,7 @@ for _, area in Layout.areas do
 end
 
 -- Geometry of every room.
-local allSolid = {}
+local walls = {}
 for _, roomPlan in plan.rooms do
 	local room = roomPlan.room
 	local name = room.name
@@ -71,13 +95,13 @@ for _, roomPlan in plan.rooms do
 		check(`{name}/{box.name}: positive size`, box.sx > 0 and box.sy > 0 and box.sz > 0)
 		check(
 			`{name}/{box.name}: inside the room footprint`,
-			box.x - box.sx / 2 >= room.x0 - 1e-6
-				and box.x + box.sx / 2 <= room.x1 + 1e-6
-				and box.z - box.sz / 2 >= room.z0 - 1e-6
-				and box.z + box.sz / 2 <= room.z1 + 1e-6
+			box.x - box.sx / 2 >= room.x0 - EPSILON
+				and box.x + box.sx / 2 <= room.x1 + EPSILON
+				and box.z - box.sz / 2 >= room.z0 - EPSILON
+				and box.z + box.sz / 2 <= room.z1 + EPSILON
 		)
-		check(`{name}/{box.name}: below the ceiling`, box.y + box.sy / 2 <= room.height + 1e-6)
-		table.insert(allSolid, box)
+		check(`{name}/{box.name}: below the ceiling`, box.y + box.sy / 2 <= room.height + EPSILON)
+		table.insert(walls, box)
 	end
 	-- Walls of one room must not overlap each other (would z-fight).
 	for i = 1, #roomPlan.walls do
@@ -96,44 +120,51 @@ for _, roomPlan in plan.rooms do
 	end
 end
 
--- Every doorway is really open: no wall of any room intersects the door panel.
-for _, door in plan.doors do
-	local blocked = false
-	for _, wall in allSolid do
-		if overlaps(wall, door.panel) then
-			blocked = true
+-- Passages: framed, and really open for a character to walk through.
+local frames = {}
+for _, passage in plan.passages do
+	check(`{passage.name}: frame has jambs, header and threshold`, #passage.frame == 4)
+	check(`{passage.name}: only doors have a panel`, (passage.panel ~= nil) == passage.isDoor)
+	for _, box in passage.frame do
+		check(`{passage.name}/{box.name}: positive size`, box.sx > 0 and box.sy > 0 and box.sz > 0)
+		table.insert(frames, box)
+		for _, wall in walls do
+			if overlaps(wall, box) then
+				check(`{passage.name}/{box.name}: does not overlap wall {wall.name}`, false)
+			end
 		end
 	end
-	check(`{door.name}: doorway is not blocked by a wall`, not blocked)
 end
 
--- A walkable gap also exists for archways (no door): probe the middle of each connection.
-local byName = {}
-for _, room in Layout.rooms do
-	byName[room.name] = room
-end
-for _, connection in Layout.connections do
-	if not connection.door then
-		local a, b = byName[connection.a], byName[connection.b]
-		local sideBySide = a.x1 == b.x0 or a.x0 == b.x1
-		local line = if sideBySide
-			then (if a.x1 == b.x0 then a.x1 else a.x0)
-			else (if a.z1 == b.z0 then a.z1 else a.z0)
-		local probe = {
-			x = if sideBySide then line else connection.at,
-			y = 3,
-			z = if sideBySide then connection.at else line,
-			sx = if sideBySide then 2 else connection.width - 1,
-			sy = 5,
-			sz = if sideBySide then connection.width - 1 else 2,
-		}
-		local blocked = false
-		for _, wall in allSolid do
-			if overlaps(wall, probe) then
+for _, passage in plan.passages do
+	local header, threshold = passage.frame[3], passage.frame[4]
+	local alongZ = header.sz > header.sx
+	-- The volume a character needs: between the jambs, above the threshold, below the header,
+	-- reaching 3 studs into both rooms.
+	local probe = {
+		x = header.x,
+		y = (threshold.y + threshold.sy / 2 + header.y - header.sy / 2) / 2,
+		z = header.z,
+		sx = if alongZ then 6 else threshold.sx - 0.1,
+		sy = (header.y - header.sy / 2) - (threshold.y + threshold.sy / 2) - 0.1,
+		sz = if alongZ then threshold.sz - 0.1 else 6,
+	}
+	check(`{passage.name}: at least 7 studs of headroom`, probe.sy >= 7)
+
+	local blocked = false
+	for _, list in { walls, frames, shell.rock } do
+		for _, box in list do
+			if overlaps(box, probe) then
 				blocked = true
 			end
 		end
-		check(`archway {connection.a} <-> {connection.b} is open`, not blocked)
+	end
+	check(`{passage.name}: passage is clear`, not blocked)
+
+	if passage.panel then
+		for _, box in passage.frame do
+			check(`{passage.name}: panel fits inside {box.name}`, not overlaps(box, passage.panel))
+		end
 	end
 end
 
@@ -149,6 +180,56 @@ for _, box in elevator.walls do
 end
 check("elevator east wall is split around its door", eastPieces == 3)
 check("elevator west wall is one piece", westPieces == 1)
+
+-- Shell: rock fills exactly the space that is not a room, under one roof.
+local bounds = shell.bounds
+local boundsArea = (bounds.x1 - bounds.x0) * (bounds.z1 - bounds.z0)
+local roomArea, rockArea = 0, 0
+for _, room in Layout.rooms do
+	roomArea += (room.x1 - room.x0) * (room.z1 - room.z0)
+end
+for i, rock in shell.rock do
+	rockArea += rock.sx * rock.sz
+	check(`{rock.name}: positive size`, rock.sx > 0 and rock.sy > 0 and rock.sz > 0)
+	for _, room in Layout.rooms do
+		local intrudes = rock.x - rock.sx / 2 < room.x1 - EPSILON
+			and rock.x + rock.sx / 2 > room.x0 + EPSILON
+			and rock.z - rock.sz / 2 < room.z1 - EPSILON
+			and rock.z + rock.sz / 2 > room.z0 + EPSILON
+		if intrudes then
+			check(`{rock.name}: stays out of {room.name}`, false)
+		end
+	end
+	for j = i + 1, #shell.rock do
+		if overlaps(rock, shell.rock[j]) then
+			check(`{rock.name}: does not overlap {shell.rock[j].name}`, false)
+		end
+	end
+end
+check(
+	"rock and rooms together fill the bounds exactly",
+	math.abs(roomArea + rockArea - boundsArea) < 1e-3
+)
+check("rock is merged into a modest number of blocks", #shell.rock > 0 and #shell.rock <= 120)
+check("roof covers the whole station", math.abs(shell.roof.sx * shell.roof.sz - boundsArea) < 1e-3)
+
+local tallest = 0
+for _, room in Layout.rooms do
+	tallest = math.max(tallest, room.height)
+end
+check(
+	"roof sits above the tallest ceiling",
+	shell.roof.y - shell.roof.sy / 2 >= tallest + Layout.slabThickness - EPSILON
+)
+for _, rock in shell.rock do
+	if rock.y + rock.sy / 2 > shell.roof.y - shell.roof.sy / 2 + EPSILON then
+		check(`{rock.name}: stays below the roof`, false)
+	end
+end
+
+-- Regeneration is predictable: the same layout always gives the same plan.
+check("plan is deterministic", deepEqual(plan, Plan.build(Layout)))
+check("shell is deterministic", deepEqual(shell, buildShell(Layout)))
 
 -- Broken layouts are reported.
 local function problemsAfter(mutate: (any) -> ()): number
@@ -189,6 +270,20 @@ check("build refuses an invalid layout", not pcall(function()
 	Plan.build(copy)
 end))
 
+local doorCount, lightCount, wallCount = 0, 0, #walls
+for _, passage in plan.passages do
+	if passage.isDoor then
+		doorCount += 1
+	end
+end
+for _, roomPlan in plan.rooms do
+	lightCount += #roomPlan.lights
+end
+print(
+	`layout v{Layout.version}: {#plan.rooms} rooms, {doorCount} doors, `
+		.. `{#plan.passages - doorCount} archways, {lightCount} lights, {wallCount} wall pieces, `
+		.. `{#shell.rock} rock blocks, rooms cover {math.floor(roomArea / boundsArea * 100)}% of the footprint`
+)
 print(`{total - failures}/{total} checks passed`)
 if failures > 0 then
 	error("map unit tests failed")

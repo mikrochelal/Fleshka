@@ -60,6 +60,7 @@ export type Layout = {
 	slabThickness: number,
 	doorHeight: number,
 	lightSpacing: number,
+	shellMargin: number,
 	areas: { Area },
 	rooms: { Room },
 	connections: { Connection },
@@ -87,22 +88,31 @@ export type RoomPlan = {
 	lights: { Box },
 }
 
-export type DoorPlan = {
+-- A passage between two rooms: a framed doorway with a door panel, or a framed archway.
+export type PassagePlan = {
 	name: string,
-	panel: Box,
+	isDoor: boolean,
+	-- Two jambs, a header and a floor threshold lining the opening through both walls.
+	frame: { Box },
+	panel: Box?,
 	a: string,
 	b: string,
 	requiresPower: boolean,
 	locked: boolean,
 }
 
-export type Result = { rooms: { RoomPlan }, doors: { DoorPlan } }
+export type Result = { rooms: { RoomPlan }, passages: { PassagePlan } }
 
 -- An opening in one side of a room: side is "N" (z0), "S" (z1), "W" (x0) or "E" (x1).
 type Opening = { lo: number, hi: number }
 type Edge = { axis: string, line: number, lo: number, hi: number, sideA: string, sideB: string }
 
 local DOOR_THICKNESS = 0.4
+local JAMB_WIDTH = 0.5
+local HEADER_HEIGHT = 0.5
+local THRESHOLD_HEIGHT = 0.1
+-- How far the frame stands proud of the wall face on each side.
+local FRAME_PROUD = 0.2
 local LIGHT_SIZE = { x = 4, y = 0.4, z = 1.5 }
 -- Clear wall kept between an opening and the end of the shared edge.
 local OPENING_MARGIN = 0.5
@@ -219,7 +229,7 @@ function Plan.validate(layout: Layout): { string }
 
 		local lo, hi = connection.at - connection.width / 2, connection.at + connection.width / 2
 		local margin = layout.wallThickness + OPENING_MARGIN
-		if connection.width < 3 or lo < edge.lo + margin or hi > edge.hi - margin then
+		if connection.width < 4 or lo < edge.lo + margin or hi > edge.hi - margin then
 			problem(`{label}: opening does not fit the shared edge`)
 		end
 
@@ -378,7 +388,7 @@ function Plan.build(layout: Layout): Result
 
 	local byName = roomsByName(layout)
 	local openings: { [string]: { Opening } } = {}
-	local doors: { DoorPlan } = {}
+	local passages: { PassagePlan } = {}
 
 	for _, connection in layout.connections do
 		local a, b = byName[connection.a], byName[connection.b]
@@ -389,25 +399,56 @@ function Plan.build(layout: Layout): Result
 			table.insert(openings[key], { lo = lo, hi = hi })
 		end
 
-		if connection.door then
-			local alongZ = edge.axis == "x"
-			table.insert(doors, {
-				name = `Door_{a.name}_{b.name}`,
-				panel = {
-					name = "Panel",
-					x = if alongZ then edge.line else connection.at,
-					y = layout.doorHeight / 2,
-					z = if alongZ then connection.at else edge.line,
-					sx = if alongZ then DOOR_THICKNESS else connection.width,
-					sy = layout.doorHeight,
-					sz = if alongZ then connection.width else DOOR_THICKNESS,
-				},
-				a = a.name,
-				b = b.name,
-				requiresPower = connection.requiresPower == true,
-				locked = connection.locked == true,
-			})
+		-- A box in the opening: `along` runs along the shared edge, `across` through the walls.
+		local alongZ = edge.axis == "x"
+		local function box(
+			name: string,
+			along: number,
+			alongSize: number,
+			yLo: number,
+			yHi: number,
+			across: number
+		): Box
+			return {
+				name = name,
+				x = if alongZ then edge.line else along,
+				y = (yLo + yHi) / 2,
+				z = if alongZ then along else edge.line,
+				sx = if alongZ then across else alongSize,
+				sy = yHi - yLo,
+				sz = if alongZ then alongSize else across,
+			}
 		end
+
+		local depth = 2 * layout.wallThickness + 2 * FRAME_PROUD
+		local clearWidth = connection.width - 2 * JAMB_WIDTH
+		local clearTop = layout.doorHeight - HEADER_HEIGHT
+		local jambOffset = (connection.width - JAMB_WIDTH) / 2
+
+		table.insert(passages, {
+			name = `{if connection.door then "Door" else "Archway"}_{a.name}_{b.name}`,
+			isDoor = connection.door,
+			frame = {
+				box("Jamb_1", connection.at - jambOffset, JAMB_WIDTH, 0, clearTop, depth),
+				box("Jamb_2", connection.at + jambOffset, JAMB_WIDTH, 0, clearTop, depth),
+				box("Header", connection.at, connection.width, clearTop, layout.doorHeight, depth),
+				box("Threshold", connection.at, clearWidth, 0, THRESHOLD_HEIGHT, depth),
+			},
+			panel = if connection.door
+				then box(
+					"Panel",
+					connection.at,
+					clearWidth,
+					THRESHOLD_HEIGHT,
+					clearTop,
+					DOOR_THICKNESS
+				)
+				else nil,
+			a = a.name,
+			b = b.name,
+			requiresPower = connection.requiresPower == true,
+			locked = connection.locked == true,
+		})
 	end
 
 	local rooms: { RoomPlan } = {}
@@ -457,7 +498,7 @@ function Plan.build(layout: Layout): Result
 		})
 	end
 
-	return { rooms = rooms, doors = doors }
+	return { rooms = rooms, passages = passages }
 end
 
 return Plan

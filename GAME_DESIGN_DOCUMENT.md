@@ -216,29 +216,19 @@ StarterPlayerScripts/TheLastSignal
   it did not create. The floor plan is data in `Layout.luau`; final decoration, lighting
   mood and hand-made props are added in Studio on top of the draft.
 
-### Draft floor plan (layout v1)
+### Draft floor plan (layout v2)
 
-```text
-              C_Archive
-                 |
-   C_Airlock - C_MainLab - C_SignalChamber
-      |          |
-      |       C_Observation
-      |
- B_EastCorridor ---- B_ServiceTunnel ---- B_MonitorRoom
-      |                                        |
-      +---- B_MainCorridor --------------------+-- Office101, Storage102 (north)
-      |          |                                 PowerRoom, Maintenance (south)
-      |     A_Checkpoint - A_SecurityBooth
-      |          |
-      |       A_Lobby - A_Elevator
-      |          |
-      |       A_Lockers
-      |
- D_Antechamber =(code door)= D_CommCenter - D_ServerRoom
-                                  |
-                             D_RadioMast
-```
+One connected structure carved out of rock: an east-west spine corridor with rooms wall to
+wall on both sides, a junction hall at its east end, a north wing (laboratory) and a south
+wing (communication center). The service tunnel is a shortcut loop that opens with power.
+The diagram and the full folder structure are in `docs/MAP_GENERATOR.md`.
+
+| Area             | Rooms |
+| ---------------- | ----- |
+| A. Entrance      | Elevator, Lobby, SecurityBooth, Checkpoint, Lockers |
+| B. Corridors     | MainCorridor, Office101, Storage102, MonitorRoom, Records104, PowerRoom, Maintenance, BreakRoom, Infirmary, Junction, NorthCorridor, SouthCorridor, ServiceTunnel |
+| C. Laboratory    | Airlock, MainLab, SignalChamber, Archive, Observation, ColdStorage |
+| D. Comm Center   | OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast |
 
 ## 12. Assets
 

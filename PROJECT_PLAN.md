@@ -53,8 +53,8 @@ players and solutions validated on the server.
 
 ## Phase 6 — World building
 
-- Draft map generator for STATION-09 — **delivered early** (see `docs/MAP_GENERATOR.md`):
-  floors, walls, ceilings, doors, lights, zones and placeholders for all four areas.
+- Draft map generator for STATION-09 — **delivered early** (see `docs/MAP_GENERATOR.md`); layout v2 is one connected structure:
+  floors, walls, ceilings, framed doors, rock shell and roof, lights, zones and placeholders.
 - Layout iteration after playtesting (edit `Layout.luau`, regenerate).
 - Lighting, atmosphere and post-processing presets; particles.
 - Props and environmental storytelling built in Studio, tagged per the world contract.

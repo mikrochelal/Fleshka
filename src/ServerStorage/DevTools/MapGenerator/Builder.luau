@@ -5,6 +5,7 @@
 -- Only built-in materials and plain parts are used - no asset IDs.
 
 local Plan = require(script.Parent.Plan)
+local Shell = require(script.Parent.Shell)
 
 type Look = { material: Enum.Material, color: Color3 }
 
@@ -15,6 +16,7 @@ end
 local FLOOR: { [string]: Look } = {
 	default = { material = Enum.Material.Concrete, color = rgb(58, 60, 63) },
 	metal = { material = Enum.Material.DiamondPlate, color = rgb(66, 69, 72) },
+	lab = { material = Enum.Material.SmoothPlastic, color = rgb(96, 102, 106) },
 }
 local CEILING: Look = { material = Enum.Material.Metal, color = rgb(42, 43, 46) }
 -- One wall tone per area helps orientation.
@@ -24,6 +26,7 @@ local WALLS: { [string]: Look } = {
 	C = { material = Enum.Material.SmoothPlastic, color = rgb(130, 138, 142) },
 	D = { material = Enum.Material.Metal, color = rgb(62, 70, 76) },
 }
+local ROCK: Look = { material = Enum.Material.Slate, color = rgb(38, 38, 41) }
 local PROPS: { [string]: Look } = {
 	wall = { material = Enum.Material.Metal, color = rgb(70, 72, 76) },
 	furniture = { material = Enum.Material.SmoothPlastic, color = rgb(104, 104, 108) },
@@ -32,11 +35,18 @@ local PROPS: { [string]: Look } = {
 }
 local DOOR: Look = { material = Enum.Material.Metal, color = rgb(96, 102, 108) }
 local DOOR_LOCKED: Look = { material = Enum.Material.Metal, color = rgb(140, 44, 44) }
+-- Frame colour tells the kind of passage apart at a glance.
+local FRAME: Look = { material = Enum.Material.Metal, color = rgb(44, 46, 50) }
+local FRAME_POWERED: Look = { material = Enum.Material.Metal, color = rgb(52, 104, 114) }
+local FRAME_LOCKED: Look = { material = Enum.Material.Metal, color = rgb(120, 36, 36) }
 
 local LIGHT_COLOR = rgb(214, 228, 240)
 local EMERGENCY_COLOR = rgb(210, 44, 40)
 
 local Builder = {}
+
+-- Set on every ceiling and on the roof; MapGenerator.setCeilingsVisible looks for it.
+Builder.OVERHEAD_ATTRIBUTE = "TLS_Overhead"
 
 local function newFolder(name: string, parent: Instance): Folder
 	local folder = Instance.new("Folder")
@@ -78,7 +88,8 @@ local function buildRoom(
 	local folder = newFolder(room.name, parent)
 
 	newPart(layout, plan.floor, FLOOR[room.style or "default"] or FLOOR.default, folder)
-	newPart(layout, plan.ceiling, CEILING, folder)
+	local ceiling = newPart(layout, plan.ceiling, CEILING, folder)
+	ceiling:SetAttribute(Builder.OVERHEAD_ATTRIBUTE, true)
 
 	local walls = newFolder("Walls", folder)
 	for _, box in plan.walls do
@@ -112,22 +123,46 @@ local function buildRoom(
 	zone:AddTag("TLS_Zone")
 end
 
-local function buildDoor(layout: Plan.Layout, door: Plan.DoorPlan, parent: Instance)
+local function buildPassage(layout: Plan.Layout, passage: Plan.PassagePlan, parent: Instance)
 	local model = Instance.new("Model")
-	model.Name = door.name
+	model.Name = passage.name
 
-	local panel = newPart(layout, door.panel, if door.locked then DOOR_LOCKED else DOOR, model)
-	-- Draft only: doors are see-through and walkable until the door system exists.
-	panel.Transparency = 0.5
-	panel.CanCollide = false
-	panel.CanQuery = false
-	model.PrimaryPart = panel
+	local frameLook = FRAME
+	if passage.locked then
+		frameLook = FRAME_LOCKED
+	elseif passage.requiresPower then
+		frameLook = FRAME_POWERED
+	end
+	local frame = newFolder("Frame", model)
+	for _, box in passage.frame do
+		newPart(layout, box, frameLook, frame)
+	end
 
-	model:SetAttribute("DoorId", door.name)
-	model:SetAttribute("RequiresPower", door.requiresPower)
-	model:SetAttribute("Locked", door.locked)
-	model:AddTag("TLS_Door")
+	local panelBox = passage.panel
+	if panelBox then
+		local panel = newPart(layout, panelBox, if passage.locked then DOOR_LOCKED else DOOR, model)
+		-- Draft only: doors are see-through and walkable until the door system exists.
+		panel.Transparency = 0.5
+		panel.CanCollide = false
+		panel.CanQuery = false
+		model.PrimaryPart = panel
+
+		model:SetAttribute("DoorId", passage.name)
+		model:SetAttribute("RequiresPower", passage.requiresPower)
+		model:SetAttribute("Locked", passage.locked)
+		model:AddTag("TLS_Door")
+	end
 	model.Parent = parent
+end
+
+local function buildShell(layout: Plan.Layout, shell: Shell.Result, parent: Instance)
+	local folder = newFolder("Shell", parent)
+	local rock = newFolder("Rock", folder)
+	for _, box in shell.rock do
+		newPart(layout, box, ROCK, rock)
+	end
+	local roof = newPart(layout, shell.roof, ROCK, folder)
+	roof:SetAttribute(Builder.OVERHEAD_ATTRIBUTE, true)
 end
 
 local function buildProp(layout: Plan.Layout, prop: Plan.Prop, parent: Instance)
@@ -173,9 +208,19 @@ local function buildMarker(
 	part:AddTag(marker.tag)
 end
 
-export type Summary = { rooms: number, doors: number, lights: number, parts: number }
+export type Summary = {
+	rooms: number,
+	doors: number,
+	archways: number,
+	lights: number,
+	parts: number,
+}
 
-function Builder.build(layout: Plan.Layout, plan: Plan.Result): (Folder, Summary)
+function Builder.build(
+	layout: Plan.Layout,
+	plan: Plan.Result,
+	shell: Shell.Result
+): (Folder, Summary)
 	local root = Instance.new("Folder")
 	root.Name = layout.rootName
 
@@ -199,9 +244,16 @@ function Builder.build(layout: Plan.Layout, plan: Plan.Result): (Folder, Summary
 	end
 
 	local doors = newFolder("Doors", root)
-	for _, door in plan.doors do
-		buildDoor(layout, door, doors)
+	local archways = newFolder("Archways", root)
+	local doorCount = 0
+	for _, passage in plan.passages do
+		if passage.isDoor then
+			doorCount += 1
+		end
+		buildPassage(layout, passage, if passage.isDoor then doors else archways)
 	end
+
+	buildShell(layout, shell, root)
 
 	for _, prop in layout.props do
 		local roomFolder = roomFolders[prop.room]
@@ -222,7 +274,13 @@ function Builder.build(layout: Plan.Layout, plan: Plan.Result): (Folder, Summary
 	end
 
 	return root,
-		{ rooms = #plan.rooms, doors = #plan.doors, lights = lightCount, parts = partCount }
+		{
+			rooms = #plan.rooms,
+			doors = doorCount,
+			archways = #plan.passages - doorCount,
+			lights = lightCount,
+			parts = partCount,
+		}
 end
 
 return Builder

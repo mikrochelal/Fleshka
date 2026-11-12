@@ -94,35 +94,49 @@ rojo plugin install
 Карту создаёт отдельный инструмент — он не часть игры и сам ничего не запускает.
 Подробности (на английском): [MAP_GENERATOR.md](MAP_GENERATOR.md).
 
+Все команды вставляются в **View → Command Bar** при **остановленной** игре (режим
+редактирования). В режиме Play генератор откажется работать.
+
 1. Обновите код и переподключите Rojo (раздел «Как получать обновления кода» выше).
-   Игра должна быть **остановлена** (режим редактирования): в режиме Play генератор
-   откажется работать, потому что всё созданное во время игры исчезает при остановке.
 2. Проверьте, что генератор попал в Studio. В Explorer должно быть
-   `ServerStorage → TLS_DevTools → MapGenerator`. Или вставьте в **View → Command Bar**:
+   `ServerStorage → TLS_DevTools → MapGenerator`. Или выполните:
 
    ```lua
    local t = game.ServerStorage:FindFirstChild("TLS_DevTools") print(t and t:FindFirstChild("MapGenerator") and "MapGenerator OK" or "MapGenerator missing")
    ```
 
-   Если ответ `MapGenerator missing` — локальная папка репозитория устарела или `rojo serve`
-   не был перезапущен; повторите шаг 1.
-3. Вставьте в Command Bar строку и нажмите Enter:
+3. Создайте карту. Если карты ещё нет:
 
    ```lua
    require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).generate()
    ```
 
-4. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
-5. В Explorer выберите `Workspace → Station09` и нажмите **F** — камера перейдёт к карте
-   (она находится под Baseplate).
-6. Чтобы увидеть планировку сверху, скройте потолки:
+   Если карта уже есть и нужно построить новую версию:
 
    ```lua
-   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).setCeilingsVisible(false)
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).regenerate()
    ```
 
-   Вернуть потолки — та же команда с `true`.
-7. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
+   Старая карта не удаляется — она переносится в `ServerStorage → TLS_MapBackups`.
+4. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
+5. В Explorer выберите `Workspace → Station09` и нажмите **F**. Карта находится под
+   Baseplate — опустите камеру ниже.
+6. Скройте потолки и крышу, чтобы видеть комнаты сверху и выделять объекты внутри:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).hideCeilings()
+   ```
+
+   Вернуть их:
+
+   ```lua
+   require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).showCeilings()
+   ```
+
+   Перед тестом игры потолки нужно вернуть — скрытые потолки остаются скрытыми и в игре.
+7. Чтобы осмотреть одну комнату: выберите её папку в Explorer (например
+   `B_Corridors → B_MainCorridor`) и нажмите **F**.
+8. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
    кнопкой по полу → **Play Here**.
 
 Правила безопасности инструмента:
@@ -130,6 +144,7 @@ rojo plugin install
 - Он создаёт только `Workspace.Station09` и больше ничего не трогает.
 - Повторный `generate()` ничего не меняет.
 - `regenerate()` не удаляет старую карту, а переносит её в `ServerStorage.TLS_MapBackups`.
+- Одинаковая планировка всегда даёт одинаковую карту с теми же именами объектов.
 - Свои объекты стройте в отдельной папке, например `Workspace.Station09_Custom`, а не
   внутри `Station09` — иначе при `regenerate()` они уедут в резервную копию вместе с картой.
 
