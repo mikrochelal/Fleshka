@@ -40,6 +40,8 @@ echo "== unit tests"
 if command -v luau >/dev/null 2>&1; then
 	luau tests/run.luau
 	luau tests/map.luau
+	luau tests/copy.luau
+	luau tests/props.luau
 else
 	echo "SKIPPED: luau CLI not installed - unit tests did not run"
 fi

@@ -1,9 +1,10 @@
 --!strict
--- Turns Studio-built objects into interactive ones.
+-- Turns world objects into interactive ones.
 --
--- World contract: an object tagged `TLS_Interactable` (a BasePart, Model or Attachment
--- inside Workspace) with string attributes `Kind` and `Id`. Optional string attributes
--- `ActionText` and `ObjectText` set the prompt wording.
+-- World contract: an object tagged `TLS_Interactable` (a BasePart, Attachment, or a Model
+-- with a PrimaryPart, inside Workspace) with string attributes `Kind` and `Id`.
+-- Optional attributes: `ActionText`, `ObjectText` (prompt wording) and `InteractEnabled`
+-- (boolean, default true). Changing any of them at runtime updates the prompt.
 --
 -- The server adds a ProximityPrompt to each tagged object. Prompts give keyboard, touch and
 -- gamepad input for free, but the trigger comes from the client, so every trigger is
@@ -19,8 +20,11 @@ local PlayerService = require(script.Parent.Parent.Services.PlayerService)
 
 export type Handler = (player: Player, target: Instance, id: string) -> ()
 
+type Binding = { prompt: ProximityPrompt, connections: { RBXScriptConnection } }
+
 local TAG = "TLS_Interactable"
 local PROMPT_NAME = "TLS_Prompt"
+local WATCHED_ATTRIBUTES = { "ActionText", "ObjectText", "InteractEnabled" }
 
 local log = Logger.new("Interaction")
 
@@ -28,17 +32,32 @@ local InteractionSystem = {}
 
 local handlers: { [string]: Handler } = {}
 local lastUse: { [Player]: number } = setmetatable({} :: any, { __mode = "k" })
-local connections: { [Instance]: RBXScriptConnection } = {}
+local bindings: { [Instance]: Binding } = {}
 
-local function positionOf(target: Instance): Vector3?
-	if target:IsA("BasePart") then
-		return target.Position
+-- The instance that carries the prompt and defines the object's position.
+local function anchorOf(target: Instance): Instance?
+	if target:IsA("BasePart") or target:IsA("Attachment") then
+		return target
 	elseif target:IsA("Model") then
-		return target:GetPivot().Position
-	elseif target:IsA("Attachment") then
-		return target.WorldPosition
+		return target.PrimaryPart
 	end
 	return nil
+end
+
+local function positionOf(target: Instance): Vector3?
+	local anchor = anchorOf(target)
+	if not anchor then
+		return nil
+	elseif anchor:IsA("BasePart") then
+		return anchor.Position
+	elseif anchor:IsA("Attachment") then
+		return anchor.WorldPosition
+	end
+	return nil
+end
+
+local function isEnabled(target: Instance): boolean
+	return target:GetAttribute("InteractEnabled") ~= false
 end
 
 local function hasLineOfSight(
@@ -75,6 +94,9 @@ local function validate(player: Player, target: Instance): string?
 	end
 	if not target:IsDescendantOf(Workspace) or not CollectionService:HasTag(target, TAG) then
 		return "target is not interactable"
+	end
+	if not isEnabled(target) then
+		return "disabled"
 	end
 
 	local now = os.clock()
@@ -124,12 +146,23 @@ local function onTriggered(player: Player, target: Instance)
 	end
 end
 
+local function refresh(target: Instance, prompt: ProximityPrompt)
+	local actionText = target:GetAttribute("ActionText")
+	local objectText = target:GetAttribute("ObjectText")
+	prompt.ActionText = if type(actionText) == "string" then actionText else "Interact"
+	prompt.ObjectText = if type(objectText) == "string" then objectText else ""
+	prompt.Enabled = isEnabled(target)
+end
+
 local function bind(target: Instance)
-	if connections[target] or not target:IsDescendantOf(Workspace) then
+	if bindings[target] or not target:IsDescendantOf(Workspace) then
 		return
 	end
-	if not positionOf(target) then
-		log:warn(`{target:GetFullName()} is tagged {TAG} but is not a Part, Model or Attachment`)
+	local anchor = anchorOf(target)
+	if not anchor then
+		log:warn(
+			`{target:GetFullName()} is tagged {TAG} but is not a Part, Attachment or Model with a PrimaryPart`
+		)
 		return
 	end
 	if
@@ -141,7 +174,7 @@ local function bind(target: Instance)
 	end
 
 	-- Reuse a prompt left by a previous bind so objects never collect duplicates.
-	local existing = target:FindFirstChild(PROMPT_NAME)
+	local existing = anchor:FindFirstChild(PROMPT_NAME)
 	local prompt: ProximityPrompt
 	if existing and existing:IsA("ProximityPrompt") then
 		prompt = existing
@@ -149,30 +182,37 @@ local function bind(target: Instance)
 		prompt = Instance.new("ProximityPrompt")
 		prompt.Name = PROMPT_NAME
 	end
-
-	local actionText = target:GetAttribute("ActionText")
-	local objectText = target:GetAttribute("ObjectText")
-	prompt.ActionText = if type(actionText) == "string" then actionText else "Interact"
-	prompt.ObjectText = if type(objectText) == "string" then objectText else ""
 	prompt.MaxActivationDistance = InteractionConfig.MaxDistance
 	prompt.RequiresLineOfSight = InteractionConfig.RequireLineOfSight
-	prompt.Parent = target
+	refresh(target, prompt)
+	prompt.Parent = anchor
 
-	connections[target] = prompt.Triggered:Connect(function(player)
-		onTriggered(player, target)
-	end)
+	local connections = {
+		prompt.Triggered:Connect(function(player)
+			onTriggered(player, target)
+		end),
+	}
+	for _, attribute in WATCHED_ATTRIBUTES do
+		table.insert(
+			connections,
+			target:GetAttributeChangedSignal(attribute):Connect(function()
+				refresh(target, prompt)
+			end)
+		)
+	end
+	bindings[target] = { prompt = prompt, connections = connections }
 end
 
 local function unbind(target: Instance)
-	local connection = connections[target]
-	if connection then
+	local binding = bindings[target]
+	if not binding then
+		return
+	end
+	bindings[target] = nil
+	for _, connection in binding.connections do
 		connection:Disconnect()
-		connections[target] = nil
 	end
-	local prompt = target:FindFirstChild(PROMPT_NAME)
-	if prompt then
-		prompt:Destroy()
-	end
+	binding.prompt:Destroy()
 end
 
 -- Registers the server-side behaviour for every object whose `Kind` attribute equals `kind`.

@@ -100,6 +100,32 @@ function PlayerService.Start(_self: any)
 	end
 end
 
+-- Calls the callback for every player already in the game and every player who joins.
+-- Systems use this instead of the raw signal so start-up order never matters.
+function PlayerService.observePlayers(callback: (player: Player) -> ())
+	PlayerService.playerAdded:Connect(function(player: Player)
+		callback(player)
+	end)
+	for _, player in Players:GetPlayers() do
+		if records[player.UserId] then
+			task.spawn(callback, player)
+		end
+	end
+end
+
+-- Calls the callback for every existing character and every character that spawns.
+function PlayerService.observeCharacters(callback: (player: Player, character: Model) -> ())
+	PlayerService.characterAdded:Connect(function(player: Player, character: Model)
+		callback(player, character)
+	end)
+	for _, player in Players:GetPlayers() do
+		local character = player.Character
+		if character and records[player.UserId] then
+			task.spawn(callback, player, character)
+		end
+	end
+end
+
 -- Nil only for a player who has already left.
 function PlayerService.getData(player: Player): PlayerData?
 	if player.Parent ~= Players then

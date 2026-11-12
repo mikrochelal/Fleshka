@@ -6,7 +6,9 @@ In 1998 the underground research facility STATION-09 went silent after transmitt
 sentence: *"IT KNOWS WE ARE LISTENING."* Years later a new signal appears, and a team is sent
 down to find out why.
 
-> **Status:** early development — foundation and core systems. See [PROGRESS.md](PROGRESS.md).
+> **Status:** version 0.3.0 — a playable 5–10 minute slice (elevator → power puzzle → radio →
+> first encounter → escape). Written and statically checked; not yet verified in Roblox
+> Studio. See [PROGRESS.md](PROGRESS.md).
 > Пошаговая инструкция на русском: [docs/SETUP_RU.md](docs/SETUP_RU.md).
 
 ## How the project is organised
@@ -28,11 +30,16 @@ src/
     Config/               Tunable values
   ServerScriptService/
     Bootstrap.server.luau The only server Script
-    Services/             Game-wide server infrastructure
-    Systems/              Gameplay features (puzzles, AI, events)
+    Services/             Game-wide server infrastructure (net, session, players,
+                          objectives, world lookup, noise)
+    Systems/              Gameplay features (spawn, movement, flashlight, interaction,
+                          power puzzle, radio, documents, THE COPY, mission script)
+    Data/                 Server-only content (documents, transmissions, prop list)
   StarterPlayer/StarterPlayerScripts/
     ClientBootstrap.client.luau   The only LocalScript
-    Controllers/          Client behaviour and UI
+    Controllers/          Client behaviour and UI (HUD, messages, documents, effects,
+                          input, audio)
+    UI/                   Shared look of the interface
   ServerStorage/DevTools/
     MapGenerator/         Draft map generator, run by hand (docs/MAP_GENERATOR.md)
 scripts/check.sh          Static validation + unit tests
@@ -61,8 +68,8 @@ tests/                    Unit tests for pure-logic modules (Luau CLI)
 6. Open your place in Roblox Studio → **Plugins** tab → **Rojo** → **Connect**.
 7. Press **Play**. The Output window should show:
    ```text
-   [TLS:Server] THE LAST SIGNAL v0.2.0 started: 3 services, 3 systems
-   [TLS:Client] Client started: 1 controllers
+   [TLS:Server] THE LAST SIGNAL v0.3.0 started: 6 services, 15 systems
+   [TLS:Client] Client started: 7 controllers
    ```
 
 Official Rojo documentation: <https://rojo.space/docs/v7/>.
@@ -74,6 +81,22 @@ All finished work is merged into the repository's default branch,
 `git fetch origin && git checkout hoplite/katane-c6d07c95 && git pull`, start `rojo serve`
 again and reconnect the Studio plugin. Restarting the server matters whenever
 `default.project.json` changed.
+
+## Playing the current build
+
+The game needs the generated map (`Workspace.Station09`, see
+[docs/MAP_GENERATOR.md](docs/MAP_GENERATOR.md)). With the map in the place and Rojo
+connected, press **Play**: you are placed in the elevator and the mission starts by itself.
+
+| Control            | Keyboard     | Gamepad | Touch          |
+| ------------------ | ------------ | ------- | -------------- |
+| Sprint             | hold Shift   | hold L3 | RUN (toggle)   |
+| Flashlight         | F            | Y       | LIGHT          |
+| Interact           | E            | X       | tap the prompt |
+| Close a document   | X            | B       | CLOSE          |
+
+The walkthrough and what to look for are in [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md)
+(section "Playable slice").
 
 ## Backing up the Studio place
 

@@ -4,6 +4,25 @@ Roadmap for THE LAST SIGNAL. Each phase is delivered as its own pull request, pa
 `scripts/check.sh`, and is then verified in Roblox Studio using `TESTING_CHECKLIST.md`.
 Actual status is tracked in `PROGRESS.md`.
 
+## Where the project is (version 0.3.0)
+
+Instead of finishing the phases strictly in order, a **playable vertical slice** was built
+across them, so the game can be played and judged early:
+
+| Phase | Delivered in the slice | Still to do |
+| ----- | ---------------------- | ----------- |
+| 2 Core | Everything | Verification in Studio |
+| 3 UI | HUD, subtitles, notifications, document viewer, title and completion cards | Main menu, lobby, party, settings, loading screen |
+| 4 Gameplay | Sprint, stamina, flashlight, batteries, documents, objectives, Power Restoration | Frequency Calibration, Security Code, door system, journal |
+| 5 Horror | THE COPY (six states), radio transmission, one scripted event, audio architecture | Six more scripted events, voice imitation, audio assets |
+| 6 World | Draft map, runtime gameplay objects | Final architecture, lighting mood, props |
+| 7 Story | Title card, slice ending | Intro cinematic, full final sequence, credits |
+| 8 Polish | — | Everything |
+
+**Next milestone (recommended):** verify the slice in Studio and fix what the first real
+run shows; then the door system and the Security Code puzzle (the code door already exists
+on the map), then audio assets.
+
 ## Phase 1 — Project foundation
 
 - Repository inspection, tooling, pinned versions (`rokit.toml`).
