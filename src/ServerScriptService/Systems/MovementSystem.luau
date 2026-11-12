@@ -17,14 +17,10 @@ type State = {
 	sprinting: boolean,
 	exhausted: boolean,
 	lastSprint: number,
-	lastNoise: number,
 	shownStamina: number,
 }
 
 local ATTRIBUTE = GameState.PlayerAttribute
--- Running is audible to THE COPY at close range, at most once per second.
-local SPRINT_NOISE_RADIUS = 34
-local SPRINT_NOISE_INTERVAL = 1
 
 local MovementSystem = {}
 
@@ -68,10 +64,8 @@ local function step(dt: number)
 				state.exhausted = true
 				state.sprinting = false
 			end
-			if now - state.lastNoise >= SPRINT_NOISE_INTERVAL then
-				state.lastNoise = now
-				NoiseService.emit(root.Position, SPRINT_NOISE_RADIUS)
-			end
+			-- Running is audible to THE COPY at close range (Config/NoiseConfig "Sprint").
+			NoiseService.make("Sprint", root.Position, player)
 		elseif now - state.lastSprint >= PlayerConfig.StaminaRegenDelay then
 			state.stamina = math.min(
 				PlayerConfig.StaminaMax,
@@ -103,7 +97,6 @@ function MovementSystem.Start(_self: any)
 			sprinting = false,
 			exhausted = false,
 			lastSprint = 0,
-			lastNoise = 0,
 			shownStamina = -1,
 		}
 		states[player] = state

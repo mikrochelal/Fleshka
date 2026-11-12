@@ -4,7 +4,14 @@
 -- touch events: the server moves the whole model directly, and it can never block a
 -- player, a raycast or an interaction.
 
+local CollectionService = game:GetService("CollectionService")
+
 local Body = {}
+
+-- Clients find the model by this tag and read its "State" attribute (the Brain state) to
+-- attach its looping sounds.
+Body.TAG = "TLS_Copy"
+Body.STATE_ATTRIBUTE = "State"
 
 -- Height of the eyes above the feet, for sight checks.
 Body.EYE_HEIGHT = 6.4
@@ -45,6 +52,8 @@ function Body.build(): Model
 	local model = Instance.new("Model")
 	model.Name = "TheCopy"
 	model:SetAttribute("Placeholder", true)
+	model:SetAttribute(Body.STATE_ATTRIBUTE, "Dormant")
+	CollectionService:AddTag(model, Body.TAG)
 
 	local root = newPart(ROOT_NAME, Vector3.new(1, 1, 1), Vector3.new(0, 0.5, 0), model)
 	root.Transparency = 1
