@@ -41,6 +41,7 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
 - Server modules: `Services/` (game-wide infrastructure) and `Systems/` (gameplay features).
   Client modules: `Controllers/`. Each may expose `Init()` (no yielding, no cross-module
   calls) and `Start()` (may yield, may call other modules). See `Shared/Loader.luau`.
+- Remotes are declared only in `Shared/Net.luau` and handled only through `NetService.on`.
 - The server is authoritative. Every remote handler validates argument types, game phase,
   player state and distance, and is rate limited. Clients send intent, never results.
 - Tunable numbers live in `ReplicatedStorage/Config`, not inline.
@@ -67,7 +68,8 @@ Run before every commit (tools are pinned in `rokit.toml`):
 scripts/check.sh
 ```
 
-It runs the Workspace guard, `rojo build`, `rojo sourcemap`, `stylua --check`, `selene` and
+It runs the Workspace guard, `rojo build`, `rojo sourcemap`, `stylua --check`, `selene`,
+the unit tests in `tests/` (pure-logic modules, standalone Luau CLI) and
 `luau-lsp analyze`. This is static analysis only; runtime behaviour must be verified in
 Roblox Studio and recorded in `TESTING_CHECKLIST.md`.
 

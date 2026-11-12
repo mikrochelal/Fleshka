@@ -196,7 +196,7 @@ StarterPlayerScripts/TheLastSignal
 
 | Tag                | Put on                    | Attributes                         |
 | ------------------ | ------------------------- | ---------------------------------- |
-| `TLS_Interactable` | Any interactive part/model | `Kind`, `Id`                       |
+| `TLS_Interactable` | Part, Model or Attachment | `Kind`, `Id` (required strings); `ActionText`, `ObjectText` (optional) |
 | `TLS_Document`     | Document pickup           | `DocumentId`                       |
 | `TLS_Door`         | Door model                | `DoorId`, `RequiresPower`          |
 | `TLS_BreakerPanel` | Power puzzle panel        | `PanelId`                          |

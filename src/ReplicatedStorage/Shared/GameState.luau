@@ -6,6 +6,10 @@ export type Phase = "Lobby" | "Loading" | "Intro" | "Playing" | "Finale" | "Endi
 
 local GameState = {}
 
+-- Attributes on ReplicatedStorage through which the server replicates its state.
+GameState.PHASE_ATTRIBUTE = "TLS_Phase"
+GameState.MODE_ATTRIBUTE = "TLS_Mode"
+
 GameState.Phase = table.freeze({
 	Lobby = "Lobby" :: Phase,
 	Loading = "Loading" :: Phase,
@@ -15,7 +19,7 @@ GameState.Phase = table.freeze({
 	Ending = "Ending" :: Phase,
 })
 
-local TRANSITIONS: { [Phase]: { Phase } } = {
+local TRANSITIONS: { [string]: { Phase } } = {
 	Lobby = { "Loading" },
 	Loading = { "Intro", "Lobby" },
 	Intro = { "Playing" },
@@ -24,8 +28,17 @@ local TRANSITIONS: { [Phase]: { Phase } } = {
 	Ending = { "Lobby" },
 }
 
+-- Returns the value as a Phase, or `fallback` when it is not a phase name.
+function GameState.parsePhase(value: string, fallback: Phase): Phase
+	if TRANSITIONS[value] == nil then
+		return fallback
+	end
+	return (value :: any) :: Phase
+end
+
 function GameState.canTransition(from: Phase, to: Phase): boolean
-	return table.find(TRANSITIONS[from], to) ~= nil
+	local allowed = TRANSITIONS[from]
+	return allowed ~= nil and table.find(allowed, to) ~= nil
 end
 
 return GameState
