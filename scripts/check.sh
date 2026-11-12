@@ -18,6 +18,17 @@ rojo build default.project.json --output build/TheLastSignal.rbxlx
 echo "== rojo sourcemap"
 rojo sourcemap default.project.json --output sourcemap.json
 
+echo "== dev tools mapping"
+# The map generator must reach Studio at ServerStorage.TLS_DevTools.MapGenerator.
+for expected in \
+	'"name":"TLS_DevTools","className":"Folder"' \
+	'"name":"MapGenerator","className":"ModuleScript"'; do
+	if ! grep -q "$expected" sourcemap.json; then
+		echo "ERROR: Rojo tree is missing $expected" >&2
+		exit 1
+	fi
+done
+
 echo "== stylua"
 stylua --check src tests
 

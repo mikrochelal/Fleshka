@@ -67,6 +67,14 @@ tests/                    Unit tests for pure-logic modules (Luau CLI)
 
 Official Rojo documentation: <https://rojo.space/docs/v7/>.
 
+### Updating
+
+All finished work is merged into the repository's default branch,
+`hoplite/katane-c6d07c95`. To update a local copy: stop `rojo serve`, run
+`git fetch origin && git checkout hoplite/katane-c6d07c95 && git pull`, start `rojo serve`
+again and reconnect the Studio plugin. Restarting the server matters whenever
+`default.project.json` changed.
+
 ## Backing up the Studio place
 
 Studio-built content is not in Git. After every building session:

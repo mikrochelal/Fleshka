@@ -9,8 +9,9 @@ is called by hand.
 
 ## Running it
 
-Rojo must be connected and the game must be **stopped**. Open **View → Command Bar**, paste
-one line and press Enter.
+Rojo must be connected and the game must be **stopped** (Edit mode). In Play mode the
+commands refuse to run, because anything created while playing disappears when the game
+stops. Open **View → Command Bar**, paste one line and press Enter.
 
 | What                           | Command                                                                                   |
 | ------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -24,6 +25,36 @@ one line and press Enter.
 
 Results are printed in the Output window with the prefix `[TLS:MapGenerator]`.
 `generate()` and `regenerate()` can be undone with Ctrl+Z.
+
+## Troubleshooting: "MapGenerator was not found"
+
+The generator reaches Studio only through Rojo, from the mapping
+`ServerStorage.TLS_DevTools → src/ServerStorage/DevTools` in `default.project.json`. If it is
+missing in Studio, the local copy of the repository is older than that mapping, or Rojo is
+still serving the old project.
+
+1. Check the local copy. In the repository folder:
+   ```bash
+   git branch --show-current
+   ls src/ServerStorage/DevTools/MapGenerator
+   ```
+   The folder must contain `init.luau`, `Layout.luau`, `Plan.luau` and `Builder.luau`. If it
+   does not exist, update to the main development branch:
+   ```bash
+   git fetch origin
+   git checkout hoplite/katane-c6d07c95
+   git pull
+   ```
+2. Stop `rojo serve` (Ctrl+C) and start it again. A running server does not reliably pick
+   up changes to `default.project.json`.
+3. In Studio: **Plugins → Rojo → Disconnect**, then **Connect**. If the plugin shows a list
+   of changes, press **Accept**.
+4. Verify in the Command Bar (game stopped):
+   ```lua
+   local t = game.ServerStorage:FindFirstChild("TLS_DevTools") print(t and t:FindFirstChild("MapGenerator") and "MapGenerator OK" or "MapGenerator missing")
+   ```
+
+`scripts/check.sh` fails if the Rojo tree stops containing the generator.
 
 ## Safety rules
 

@@ -63,6 +63,27 @@ rojo plugin install
 
 Если строки появились — всё работает.
 
+## Как получать обновления кода
+
+Весь готовый код находится в одной основной ветке — `hoplite/katane-c6d07c95`. Работайте
+только в ней. Каждый раз, когда ассистент сообщает о новых изменениях:
+
+1. Остановите `rojo serve` (Ctrl+C в его окне).
+2. В папке репозитория выполните:
+
+   ```bash
+   git fetch origin
+   git checkout hoplite/katane-c6d07c95
+   git pull
+   ```
+
+3. Снова запустите `rojo serve`.
+4. В Studio: **Plugins → Rojo → Disconnect**, затем **Connect**. Если плагин показывает
+   список изменений — нажмите **Accept**.
+
+Перезапуск `rojo serve` обязателен, когда менялся файл `default.project.json`: работающий
+сервер может продолжать отдавать старую структуру.
+
 ## Шаг 7. Резервные копии карты
 
 После каждой работы в Studio: **File → Save to File As…** → сохраните файл
@@ -73,24 +94,35 @@ rojo plugin install
 Карту создаёт отдельный инструмент — он не часть игры и сам ничего не запускает.
 Подробности (на английском): [MAP_GENERATOR.md](MAP_GENERATOR.md).
 
-1. Rojo подключён, игра **остановлена**.
-2. Откройте **View → Command Bar**, вставьте строку и нажмите Enter:
+1. Обновите код и переподключите Rojo (раздел «Как получать обновления кода» выше).
+   Игра должна быть **остановлена** (режим редактирования): в режиме Play генератор
+   откажется работать, потому что всё созданное во время игры исчезает при остановке.
+2. Проверьте, что генератор попал в Studio. В Explorer должно быть
+   `ServerStorage → TLS_DevTools → MapGenerator`. Или вставьте в **View → Command Bar**:
+
+   ```lua
+   local t = game.ServerStorage:FindFirstChild("TLS_DevTools") print(t and t:FindFirstChild("MapGenerator") and "MapGenerator OK" or "MapGenerator missing")
+   ```
+
+   Если ответ `MapGenerator missing` — локальная папка репозитория устарела или `rojo serve`
+   не был перезапущен; повторите шаг 1.
+3. Вставьте в Command Bar строку и нажмите Enter:
 
    ```lua
    require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).generate()
    ```
 
-3. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
-4. В Explorer выберите `Workspace → Station09` и нажмите **F** — камера перейдёт к карте
+4. В Output появится строка `[TLS:MapGenerator] Created Workspace.Station09: …`.
+5. В Explorer выберите `Workspace → Station09` и нажмите **F** — камера перейдёт к карте
    (она находится под Baseplate).
-5. Чтобы увидеть планировку сверху, скройте потолки:
+6. Чтобы увидеть планировку сверху, скройте потолки:
 
    ```lua
    require(game.ServerStorage.TLS_DevTools.MapGenerator:Clone()).setCeilingsVisible(false)
    ```
 
    Вернуть потолки — та же команда с `true`.
-6. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
+7. Чтобы пройтись по карте: наведите камеру на пол комнаты `A_Elevator`, нажмите правой
    кнопкой по полу → **Play Here**.
 
 Правила безопасности инструмента:
