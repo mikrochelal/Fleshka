@@ -21,10 +21,12 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
 | All Luau code, config modules, UI built in code | `Workspace`: map, lobby geometry, props        |
 | `default.project.json`, tooling, docs           | `Lighting`, `SoundService` content, models     |
 
-- **Never map `Workspace`, `Lighting`, `ServerStorage` or `SoundService` in
-  `default.project.json`.** `scripts/check.sh` fails if `Workspace` appears there.
+- **Never map `Workspace`, `Lighting` or `SoundService` in `default.project.json`**, and in
+  `ServerStorage` map only the `TLS_DevTools` child. `scripts/check.sh` fails if `Workspace`
+  appears there.
 - Rojo only manages the folders it maps: `ReplicatedStorage.Shared`, `ReplicatedStorage.Config`,
-  `ServerScriptService.TheLastSignal`, `StarterPlayerScripts.TheLastSignal`. Do not create
+  `ServerScriptService.TheLastSignal`, `StarterPlayerScripts.TheLastSignal`,
+  `ServerStorage.TLS_DevTools`. Do not create
   Studio-side objects inside those folders — Rojo will delete them on sync.
 - Rojo sync is one-way (files → Studio). Studio-built content is **not** in Git; it lives in
   the place file and its backups.
@@ -32,7 +34,11 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
 - Any script that creates instances (map generators, setup tools) must be idempotent:
   running it twice must not create duplicates, and it must refuse to touch existing content.
 - Code finds world objects through **CollectionService tags and attributes** (contract in
-  `GAME_DESIGN_DOCUMENT.md` §11), never through hard-coded Workspace paths.
+  `GAME_DESIGN_DOCUMENT.md` §11), never through hard-coded Workspace paths. Tagged objects
+  outside `Workspace` (for example map backups in `ServerStorage`) must be ignored.
+- Development tools live in `src/ServerStorage/DevTools` and are run by hand from the Studio
+  Command Bar. Game code never requires them. The draft map generator is documented in
+  `docs/MAP_GENERATOR.md`; it may only create or move `Workspace.Station09`.
 
 ## Architecture rules
 

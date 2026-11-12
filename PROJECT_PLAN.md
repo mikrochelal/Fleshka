@@ -53,7 +53,9 @@ players and solutions validated on the server.
 
 ## Phase 6 — World building
 
-- Idempotent graybox generator for STATION-09 (run once in Studio).
+- Draft map generator for STATION-09 — **delivered early** (see `docs/MAP_GENERATOR.md`):
+  floors, walls, ceilings, doors, lights, zones and placeholders for all four areas.
+- Layout iteration after playtesting (edit `Layout.luau`, regenerate).
 - Lighting, atmosphere and post-processing presets; particles.
 - Props and environmental storytelling built in Studio, tagged per the world contract.
 

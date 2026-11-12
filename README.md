@@ -33,6 +33,8 @@ src/
   StarterPlayer/StarterPlayerScripts/
     ClientBootstrap.client.luau   The only LocalScript
     Controllers/          Client behaviour and UI
+  ServerStorage/DevTools/
+    MapGenerator/         Draft map generator, run by hand (docs/MAP_GENERATOR.md)
 scripts/check.sh          Static validation + unit tests
 tests/                    Unit tests for pure-logic modules (Luau CLI)
 ```
