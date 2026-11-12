@@ -7,6 +7,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+local Localization = require(ReplicatedStorage.Shared.Localization)
 local Logger = require(ReplicatedStorage.Shared.Logger)
 local PropList = require(script.Parent.Parent.Data.PropList) :: any
 local WorldService = require(script.Parent.Parent.Services.WorldService)
@@ -17,12 +18,18 @@ type Look = { material: Enum.Material, color: Color3 }
 local INTERACTABLE_TAG = "TLS_Interactable"
 local RUNTIME_ATTRIBUTE = "TLS_RuntimeProp"
 local LABEL_NAME = "TLS_Label"
+-- Client contract (Controllers/WorldTextController): labels carry this tag and the
+-- attribute holds the text reference to render.
+local LABEL_TAG = "TLS_LocalizedLabel"
+local LABEL_ATTRIBUTE = "TLS_Text"
 
 local LOOKS: { [string]: Look } = {
 	paper = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(196, 194, 180) },
 	panel = { material = Enum.Material.Metal, color = Color3.fromRGB(70, 130, 140) },
 	radio = { material = Enum.Material.Metal, color = Color3.fromRGB(48, 52, 56) },
 	battery = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(150, 128, 60) },
+	item = { material = Enum.Material.Metal, color = Color3.fromRGB(176, 140, 72) },
+	switch = { material = Enum.Material.Metal, color = Color3.fromRGB(120, 40, 38) },
 }
 local STAND_LOOK: Look = { material = Enum.Material.Metal, color = Color3.fromRGB(58, 60, 64) }
 
@@ -125,7 +132,39 @@ function WorldProps.partOf(target: Instance): BasePart?
 	return nil
 end
 
--- Shows (or updates) a small floating text label above an object.
+-- World position of a prop by id, or nil when it was not placed.
+function WorldProps.positionOf(id: string): Vector3?
+	local target = props[id]
+	local part = target and WorldProps.partOf(target)
+	return if part then part.Position else nil
+end
+
+-- Takes a prop out of play (a picked-up item). Objects the game created are destroyed;
+-- parts of the Studio-built map are only made non-interactive.
+function WorldProps.remove(id: string)
+	local target = props[id]
+	if not target then
+		return
+	end
+	props[id] = nil
+	if target:GetAttribute(RUNTIME_ATTRIBUTE) == true then
+		target:Destroy()
+	else
+		target:SetAttribute("InteractEnabled", false)
+	end
+end
+
+-- Changes an object's colour and whether it glows.
+function WorldProps.setLook(target: Instance, color: Color3, glowing: boolean)
+	local part = WorldProps.partOf(target)
+	if part then
+		part.Color = color
+		part.Material = if glowing then Enum.Material.Neon else Enum.Material.Metal
+	end
+end
+
+-- Shows (or updates) a small floating text label above an object. `text` is an encoded
+-- text reference (Shared/Text); clients render it in their own language.
 function WorldProps.setLabel(target: Instance, text: string, color: Color3)
 	local part = WorldProps.partOf(target)
 	if not part then
@@ -138,11 +177,13 @@ function WorldProps.setLabel(target: Instance, text: string, color: Color3)
 	else
 		gui = Instance.new("BillboardGui")
 		gui.Name = LABEL_NAME
-		gui.Size = UDim2.fromScale(7, 1.6)
-		gui.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 1.4, 0)
+		gui.Size = UDim2.fromScale(8, 1.8)
+		gui.StudsOffsetWorldSpace = Vector3.new(0, part.Size.Y / 2 + 1.5, 0)
 		gui.MaxDistance = 36
 		gui.LightInfluence = 0
 		gui.ResetOnSpawn = false
+		-- The game translates its own text; Roblox must not capture or translate it.
+		gui.AutoLocalize = false
 
 		local label = Instance.new("TextLabel")
 		label.Name = "Text"
@@ -153,12 +194,23 @@ function WorldProps.setLabel(target: Instance, text: string, color: Color3)
 		label.Font = Enum.Font.GothamMedium
 		label.TextScaled = true
 		label.Parent = gui
+		gui:AddTag(LABEL_TAG)
 		gui.Parent = part
 	end
 	local label = gui:FindFirstChild("Text")
 	if label and label:IsA("TextLabel") then
-		label.Text = text
+		-- English is the fallback until the client renders the reference.
+		label.Text = Localization.render(Localization.SOURCE, text)
 		label.TextColor3 = color
+	end
+	gui:SetAttribute(LABEL_ATTRIBUTE, text)
+end
+
+function WorldProps.clearLabel(target: Instance)
+	local part = WorldProps.partOf(target)
+	local existing = part and part:FindFirstChild(LABEL_NAME)
+	if existing then
+		existing:Destroy()
 	end
 end
 

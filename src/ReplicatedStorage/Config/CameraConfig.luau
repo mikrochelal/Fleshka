@@ -16,8 +16,4 @@ return table.freeze({
 	RunSpeedThreshold = 15,
 	-- How quickly the view settles (higher = snappier).
 	BobSmoothing = 10,
-
-	-- Where the first-person flashlight sits relative to the camera: slightly right and
-	-- below the eye, like a hand-held torch.
-	FlashlightOffset = Vector3.new(0.45, -0.35, 0),
 })
