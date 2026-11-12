@@ -31,7 +31,8 @@ Created by the game at runtime (version 0.3.0), also from plain parts and all pl
 | Battery packs: a box on a crate                      | Placeholder | Battery model                        |
 | Elevator control panel: a wall box                   | Placeholder | Panel model                          |
 | Floating text labels on breakers, lever and radio    | Placeholder | In-world displays / indicator lamps  |
-| Flashlight: a `SpotLight` on the character's head, no visible torch | Placeholder | Held flashlight model and animation |
+| Flashlight: a `SpotLight` on the character's head for other players, a camera-attached `SpotLight` for the local player; no visible torch | Placeholder | Held flashlight model and animation |
+| Switchgear and analysis console: the map's placeholder boxes made interactive | Placeholder | Cabinet and console models |
 
 ### Audio
 
@@ -48,6 +49,8 @@ Roblox's default character footsteps.
 | `DoorOpen`, `DoorClose` | Door system (not built yet) | Needed |
 | `DistantMetal` | Ambient one-shots (not triggered yet) | Needed |
 | `CopyPresence`, `CopyAlert`, `Caught` | THE COPY | Needed |
+| `Machinery` | Power and relay start-up | Needed |
+| `FinalSignal` | The ending: a rising, distorted, voice-like signal (layered static and processed voice textures, not a human scream) | Needed — the most important missing sound |
 
 ## Needed (identified from the design, nothing chosen yet)
 

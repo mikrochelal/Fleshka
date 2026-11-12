@@ -75,6 +75,13 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
   use `PlayerService.observePlayers` / `observeCharacters`, so start-up order never matters.
 - Systems talk to each other through signals and small functions, not shared tables. Noise
   goes through `Services/NoiseService`; mission order lives only in `Systems/SliceDirector`.
+- THE COPY's danger is set only by `CopyAI.setStage`, called from `SliceDirector` when an
+  objective completes; per-stage numbers live in `Config/CopyConfig.Stages`. Never raise
+  its speed above the player's sprint, and keep `tests/copy.luau` green.
+- Never take completed progress away from players (no puzzle resets, no objective going
+  back). A failed action may cost time or make noise, nothing more.
+- Anything THE COPY, the power system or the mission script does must be visible in the
+  Output log (`[TLS:THE_COPY]`, `[TLS:Power]`, `[TLS:Slice]`): the owner debugs by sending logs.
 - Logic that can be written without Roblox APIs (state machines, placement math) is kept in
   its own module with no `game`/`script` access and gets a unit test in `tests/`.
 - The server is authoritative. Every remote handler validates argument types, game phase,

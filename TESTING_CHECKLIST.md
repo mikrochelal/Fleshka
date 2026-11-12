@@ -15,8 +15,8 @@ Run `scripts/check.sh` before every commit.
 | `selene src`                    | Pass   | 2026-11-12 | 0 errors, 0 warnings          |
 | Unit tests (`tests/run.luau`)   | Pass   | 2026-11-12 | 28/28, Luau CLI 0.746         |
 | Map unit tests (`tests/map.luau`) | Pass | 2026-11-12 | 2887/2887, layout v4 (55 rooms): original 29 rooms unchanged, no overlapping parts, character flood fill reaches every room, two door signs per connection |
-| THE COPY rules (`tests/copy.luau`) | Pass | 2026-11-12 | 45/45: waking, fairness, warning, lost sight, time limit, catch, cooldowns |
-| Gameplay data (`tests/props.luau`) | Pass | 2026-11-12 | 175/175 against layout v4 |
+| THE COPY rules (`tests/copy.luau`) | Pass | 2026-11-12 | 102/102: state rules, escalation (forward only, no skipped stage), per-stage fairness limits, tuning |
+| Gameplay data (`tests/props.luau`) | Pass | 2026-11-12 | 234/234 against layout v4: 15 objects, 6 documents, 3 transmissions, 8 objectives |
 | `luau-lsp analyze` (strict)     | Pass   | 2026-11-12 |                               |
 
 ## Phase 1 — manual tests in Roblox Studio
@@ -48,7 +48,7 @@ if your place is different.
 
 | #    | Test                                              | Expected                                                                                       | Result  | Date |
 | ---- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------- | ------- | ---- |
-| 2.1  | Press Play, read Output                           | `[TLS:SessionService] Mode: Studio, phase: Lobby`; `[TLS:Interaction] 2 tagged object(s) found`; `[TLS:Server] … started: 6 services, 15 systems`; `[TLS:Client] Client started: 7 controllers`; `[TLS:Session] Phase: Lobby`; no TLS warnings | Pass (owner; build with 2 systems, before OverheadGuard) | 2026-11-12 |
+| 2.1  | Press Play, read Output                           | `[TLS:SessionService] Mode: Studio, phase: Lobby`; `[TLS:Interaction] 2 tagged object(s) found`; `[TLS:Server] … started: 6 services, 15 systems`; `[TLS:Client] Client started: 8 controllers`; `[TLS:Session] Phase: Lobby`; no TLS warnings | Pass (owner; build with 2 systems, before OverheadGuard) | 2026-11-12 |
 | 2.2  | Ready handshake                                   | Output shows `[TLS:PlayerService] <name> joined` then `<name> is ready`                         | Pass (owner) | 2026-11-12 |
 | 2.3  | Walk to the cyan cube, press E (tap on mobile)    | Prompt "Toggle" appears within about 10 studs; cube glows; Output `[TLS:Debug] <name> toggled "ToggleTest" -> on`; again → off | Not run | |
 | 2.4  | Hold/spam E on the cyan cube                      | Never more than about 4 toggles per second                                                     | Not run |      |
@@ -104,6 +104,40 @@ Commands are in `docs/MAP_GENERATOR.md`. Run them in the Command Bar with the ga
 | X.11 | Visual check of new wings | No gaps, no flickering surfaces, no light leaking through walls | Not run | |
 | X.12 | Play the slice on the new map (sections below) | Still completable; breakers, lever, radio, console, elevator where they were | Not run | |
 | X.13 | Frame rate while walking the whole station, PC and mobile emulator | Acceptable (about 1,230 parts, 99 lights without shadows) | Not run | |
+
+## Version 0.4.0 — regression tests for the two reported bugs and the new systems
+
+None of these has been run in Studio yet.
+
+| #    | Test | Expected | Result | Date |
+| ---- | ---- | -------- | ------ | ---- |
+| V.1  | Press Play, read Output | `v0.4.0 started: 6 services, 15 systems`; `8 controllers`; `[TLS:THE_COPY] AI initialized: N observation points, stage Dormant` (15 on the v4 map); `[TLS:Atmosphere] Underground lighting, haze and colour grade applied…`; no red errors | Not run | |
+| V.2  | **Power, wrong breaker.** Engage a breaker that is not first on the memo | It flashes red, label TRIPPED, then back to OFF; message "trips straight back out"; **no other breaker changes**; HUD still shows the same `BREAKERS n/3` | Not run | |
+| V.3  | **Power, lever early.** Throw the lever with fewer than 3 breakers | "The lever will not move yet: n of 3…" with a pointer to the memo; nothing resets | Not run | |
+| V.4  | **Power, success.** Engage all three in the memo's order, throw the lever | "Emergency power starting…", surge, lights on, "Emergency power restored."; HUD `EMERGENCY POWER ONLINE`; objective becomes "Bring the communications relay online."; Output `[TLS:Power] Power state: OFF -> ON` and `[TLS:THE_COPY] Escalation: DORMANT -> AWARE` | Not run | |
+| V.5  | Press E on the lever again; two players press it at once | "already on" / one start-up only; objectives never go back | Not run | |
+| V.6  | Switchgear in Electrical Control (v4 map) | Before power: "dead". After: cabinet turns green, "Communications relay online.", radio shows INCOMING SIGNAL | Not run | |
+| V.7  | Radio transmission to the end | Output `Escalation: AWARE -> HUNTING`, `Corridor sighting armed` | Not run | |
+| V.8  | **THE COPY appears.** Walk into the main corridor after the transmission | Output `Spawn requested (scripted sighting)`, `Spawn successful: B_MainCorridor`; a tall dark figure with a faint glow at the far end; visible to every player | Not run | |
+| V.9  | Wait about a minute in one room during stage Aware or later | Output `Spawn requested (a visit)…` then `Spawn successful: <room>`, or `Spawn failed: … no observation point…` explaining why not | Not run | |
+| V.10 | Analysis console (v4 map), before and after the radio | Before: "only noise". After: console subtitles, then `Escalation: HUNTING -> HOSTILE` | Not run | |
+| V.11 | Central computer after the trace | Elevator recalled; `Escalation: HOSTILE -> FINALPURSUIT`; it arrives quickly and chases | Not run | |
+| V.12 | Final pursuit fairness | Sprinting and breaking line of sight still escapes it; it never appears in view | Not run | |
+| V.13 | Elevator panel | Fade to black; subtitles of the rising signal with heavy interference; silence; "Thank you for bringing it outside."; completion card | Not run | |
+| V.14 | Never more than one figure | At any time `Workspace.TLS_Runtime` contains at most one `TheCopy` | Not run | |
+| V.15 | Reset your character during a chase; a second player joins late | No errors; it keeps working; the late joiner sees the current objective and power state | Not run | |
+| V.16 | **First person.** During play | Camera is first person; own body not in the way; other players' characters fully visible; slight step bob, stronger when running; no nausea-inducing shake | Not run | |
+| V.17 | First person after respawn, and with a document open | Still first person after Reset; with a document open the mouse is free and CLOSE can be clicked | Not run | |
+| V.18 | **Flashlight in first person.** Press F, look up and down | The beam follows the view, including up and down; one beam only (no second light from the head) | Not run | |
+| V.19 | Flashlight in multiplayer | The other player sees a light coming from your character's head; your state on their screen matches | Not run | |
+| V.20 | Atmosphere | Dark but navigable with the flashlight; distant corridor ends fade; not foggy up close; after Stop, Lighting in Studio is as before | Not run | |
+| V.21 | Disturbances | From stage Aware, the lights of your room stutter briefly now and then while the figure is away; never before power | Not run | |
+| V.22 | HUD | Hint line under the objective; power line under it; completed objectives struck through; nothing overlaps on a phone-sized screen | Not run | |
+| V.23 | Old map (29 rooms) | Two yellow lines `Objective RestoreSystems / TraceSignal will be skipped…`; the mission still completes | Not run | |
+| V.24 | Frame rate on the v4 map during a chase | Acceptable on PC and in the mobile emulator | Not run | |
+
+The tables below were written for 0.3.0. Where they differ from 0.4.0 (breakers no longer
+reset, the radio wakes after the relay, the console needs the trace), the table above wins.
 
 ## Playable slice (version 0.3.0) — manual tests in Roblox Studio
 
