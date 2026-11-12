@@ -31,12 +31,12 @@ _Last updated: 2026-11-12_
 | `Shared/GameState` (phases, transitions, parsing)           | Implemented; unit tested (Luau CLI)            |
 | `Shared/RateLimiter` (token bucket)                         | Implemented; unit tested (Luau CLI)            |
 | `Shared/Signal` (event system)                              | Implemented; static checks; **Not tested** at runtime |
-| `Shared/Net` + `NetService` (remotes, type checks, rate limit) | Implemented; static checks; **Not tested** at runtime |
-| `SessionService` (mode detection, phase machine, replication) | Implemented; static checks; **Not tested** at runtime |
-| `PlayerService` (join, leave, ready, reconnect grace, respawn signal) | Implemented; static checks; **Not tested** at runtime |
-| `InteractionSystem` (tag-driven, server-validated prompts)  | Implemented; static checks; **Not tested** at runtime |
+| `Shared/Net` + `NetService` (remotes, type checks, rate limit) | **Partially tested** — the ready event reached the server in Studio; rejection paths not yet run |
+| `SessionService` (mode detection, phase machine, replication) | **Partially tested** — mode and initial phase confirmed in Studio (owner, 2026-11-12); phase changes not yet run |
+| `PlayerService` (join, leave, ready, reconnect grace, respawn signal) | **Partially tested** — join and ready confirmed in Studio (owner, 2026-11-12); leave, respawn, reconnect not yet run |
+| `InteractionSystem` (tag-driven, server-validated prompts)  | **Partially tested** — found both tagged test objects at startup in Studio; triggering not yet confirmed |
 | `DebugInteractables` (Studio-only test kinds)               | Implemented; static checks; **Not tested** at runtime |
-| `SessionController` (client phase view, ready handshake)    | Implemented; static checks; **Not tested** at runtime |
+| `SessionController` (client phase view, ready handshake)    | **Partially tested** — initial phase and handshake confirmed in Studio; phase changes not yet run |
 | World contract validator                                    | Partly implemented — `TLS_Interactable` objects are validated when bound; other tags are validated as their systems arrive |
 
 Phase 2 is complete only after checklist section "Phase 2" is run in Studio.
@@ -45,11 +45,14 @@ Phase 2 is complete only after checklist section "Phase 2" is run in Studio.
 
 | Item                                                      | Status                                         |
 | --------------------------------------------------------- | ---------------------------------------------- |
-| Layout v2: 29 rooms in 4 areas, 30 connections, one connected structure | Implemented; unit tested (Luau CLI): no overlapping rooms, every room reachable, props and markers inside rooms |
-| Geometry math (walls split around openings, lintels, lights, door frames) | Implemented; unit tested (Luau CLI): every passage is clear for a character, frames and walls do not overlap |
-| Rock shell and roof (`Shell.luau`)                        | Implemented; unit tested (Luau CLI): rock and rooms fill the footprint exactly, rock never intrudes into a room |
-| Instance builder (parts, materials, lights, tags)         | Layout v1 **Partially tested** — the owner generated and viewed the v1 map in Studio; v2 additions (frames, shell, new rooms) **Not tested** in Studio |
-| Commands: `generate`, `regenerate`, `status`, `hideCeilings`, `showCeilings` | `generate` ran in Studio on v1; the rest **Not tested** in Studio |
+| Layout v3: 29 rooms in 4 areas, 30 connections (floor plan identical to v2, pinned by a test) | Implemented; unit tested (Luau CLI) |
+| Geometry math (walls, lintels, lights, door frames)       | Implemented; unit tested (Luau CLI): no two solid parts overlap; a character-sized flood fill from the spawn point reaches every room, marker and doorway |
+| Shell: structural rock up to the lowest ceiling, rock caps, one roof section per room | Implemented; unit tested (Luau CLI): sections cover exactly their rooms, nothing overlaps |
+| Unified palette and lamps                                 | Implemented; **Not tested** — appearance can only be judged in Studio |
+| Instance builder (parts, materials, lights, tags)         | **Partially tested** — the owner generated and viewed layouts v1 and v2 in Studio; v3 **Not tested** in Studio |
+| Commands: `generate`, `regenerate`, `status`, `hideCeilings`, `showCeilings` | **Partially tested** — the owner ran generation and ceiling hiding on v2; v3 behaviour **Not tested** |
+| Commands: `viewFromAbove`, `applyLightingPreset`, `restoreLighting` | Implemented; static checks; **Not tested** in Studio |
+| `Systems/OverheadGuard` (shows hidden ceilings while the game runs) | Implemented; static checks; **Not tested** at runtime |
 | Safety: idempotent generate, backup instead of delete, refusal for foreign content, deterministic output | Implemented; determinism unit tested; the rest **Not tested** in Studio |
 | Rojo mapping `ServerStorage.TLS_DevTools`                 | **Tested** — verified against a live `rojo serve` tree; synced to the owner's Studio |
 

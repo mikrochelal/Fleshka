@@ -204,6 +204,7 @@ StarterPlayerScripts/TheLastSignal
 | `TLS_Zone`         | Invisible area volume     | `Area`, `ZoneId`                   |
 | `TLS_CopyVantage`  | Observation point         | `Area`                             |
 | `TLS_Spawn`        | Spawn/checkpoint          | `Checkpoint`                       |
+| `TLS_Overhead`     | Ceilings and roof parts   | — (may be hidden in Studio; shown automatically while the game runs) |
 
   The list is finalised when each system is implemented; a validator will report missing or
   misconfigured tags in the Output window at startup.
@@ -216,7 +217,7 @@ StarterPlayerScripts/TheLastSignal
   it did not create. The floor plan is data in `Layout.luau`; final decoration, lighting
   mood and hand-made props are added in Studio on top of the draft.
 
-### Draft floor plan (layout v2)
+### Draft floor plan (layout v2 plan, generator v3)
 
 One connected structure carved out of rock: an east-west spine corridor with rooms wall to
 wall on both sides, a junction hall at its east end, a north wing (laboratory) and a south

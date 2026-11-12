@@ -38,7 +38,11 @@ Design: `GAME_DESIGN_DOCUMENT.md`. Roadmap: `PROJECT_PLAN.md`. Real status: `PRO
   outside `Workspace` (for example map backups in `ServerStorage`) must be ignored.
 - Development tools live in `src/ServerStorage/DevTools` and are run by hand from the Studio
   Command Bar. Game code never requires them. The draft map generator is documented in
-  `docs/MAP_GENERATOR.md`; it may only create or move `Workspace.Station09`.
+  `docs/MAP_GENERATOR.md`; `generate`/`regenerate` may only create or move
+  `Workspace.Station09`. Its only other effects are explicit commands: `viewFromAbove`
+  (editor camera) and `applyLightingPreset` (six `Lighting` properties, reversible).
+- The reference floor plan in `Layout.luau` is pinned by checksums in `tests/map.luau`.
+  Do not move rooms or connections unless the owner asks for a layout change.
 
 ## Architecture rules
 

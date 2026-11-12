@@ -13,18 +13,20 @@ local function rgb(r: number, g: number, b: number): Color3
 	return Color3.fromRGB(r, g, b)
 end
 
+-- One restrained palette for the whole station: dark, cold, low saturation, with every
+-- surface in a similar brightness range so no room reads as white or blue. Areas differ
+-- only slightly in wall tone; mood comes from lighting later, not from surface colour.
 local FLOOR: { [string]: Look } = {
-	default = { material = Enum.Material.Concrete, color = rgb(58, 60, 63) },
-	metal = { material = Enum.Material.DiamondPlate, color = rgb(66, 69, 72) },
-	lab = { material = Enum.Material.SmoothPlastic, color = rgb(96, 102, 106) },
+	default = { material = Enum.Material.Concrete, color = rgb(52, 54, 56) },
+	metal = { material = Enum.Material.DiamondPlate, color = rgb(56, 59, 62) },
+	lab = { material = Enum.Material.Concrete, color = rgb(62, 65, 67) },
 }
 local CEILING: Look = { material = Enum.Material.Metal, color = rgb(42, 43, 46) }
--- One wall tone per area helps orientation.
 local WALLS: { [string]: Look } = {
-	A = { material = Enum.Material.Concrete, color = rgb(88, 90, 92) },
-	B = { material = Enum.Material.Concrete, color = rgb(72, 76, 80) },
-	C = { material = Enum.Material.SmoothPlastic, color = rgb(130, 138, 142) },
-	D = { material = Enum.Material.Metal, color = rgb(62, 70, 76) },
+	A = { material = Enum.Material.Concrete, color = rgb(74, 76, 78) },
+	B = { material = Enum.Material.Concrete, color = rgb(70, 73, 76) },
+	C = { material = Enum.Material.Concrete, color = rgb(80, 84, 86) },
+	D = { material = Enum.Material.Concrete, color = rgb(66, 70, 74) },
 }
 local ROCK: Look = { material = Enum.Material.Slate, color = rgb(38, 38, 41) }
 local PROPS: { [string]: Look } = {
@@ -40,13 +42,19 @@ local FRAME: Look = { material = Enum.Material.Metal, color = rgb(44, 46, 50) }
 local FRAME_POWERED: Look = { material = Enum.Material.Metal, color = rgb(52, 104, 114) }
 local FRAME_LOCKED: Look = { material = Enum.Material.Metal, color = rgb(120, 36, 36) }
 
-local LIGHT_COLOR = rgb(214, 228, 240)
-local EMERGENCY_COLOR = rgb(210, 44, 40)
+-- The same lamp everywhere: cold, slightly desaturated, deliberately dim so rooms keep
+-- dark corners. Emergency lamps differ only in colour and are dimmer still.
+type Lamp = { color: Color3, fixture: Color3, brightness: number, range: number }
+local LAMP: Lamp =
+	{ color = rgb(186, 200, 206), fixture = rgb(150, 164, 170), brightness = 0.55, range = 20 }
+local EMERGENCY_LAMP: Lamp =
+	{ color = rgb(170, 44, 38), fixture = rgb(150, 40, 36), brightness = 0.45, range = 16 }
 
 local Builder = {}
 
--- Set on every ceiling and on the roof; MapGenerator.setCeilingsVisible looks for it.
-Builder.OVERHEAD_ATTRIBUTE = "TLS_Overhead"
+-- Tag on every ceiling, roof section and rock cap: everything that covers the interior from
+-- above. The ceiling commands hide exactly these parts and nothing else.
+Builder.OVERHEAD_TAG = "TLS_Overhead"
 
 local function newFolder(name: string, parent: Instance): Folder
 	local folder = Instance.new("Folder")
@@ -89,7 +97,7 @@ local function buildRoom(
 
 	newPart(layout, plan.floor, FLOOR[room.style or "default"] or FLOOR.default, folder)
 	local ceiling = newPart(layout, plan.ceiling, CEILING, folder)
-	ceiling:SetAttribute(Builder.OVERHEAD_ATTRIBUTE, true)
+	ceiling:AddTag(Builder.OVERHEAD_TAG)
 
 	local walls = newFolder("Walls", folder)
 	for _, box in plan.walls do
@@ -98,18 +106,18 @@ local function buildRoom(
 
 	local lights = newFolder("Lights", folder)
 	local emergency = room.emergency == true
-	local color = if emergency then EMERGENCY_COLOR else LIGHT_COLOR
+	local lamp = if emergency then EMERGENCY_LAMP else LAMP
 	for _, box in plan.lights do
 		local fixture =
-			newPart(layout, box, { material = Enum.Material.Neon, color = color }, lights)
+			newPart(layout, box, { material = Enum.Material.Neon, color = lamp.fixture }, lights)
 		makeGhost(fixture)
 		fixture:SetAttribute("Circuit", if emergency then "Emergency" else area.id)
 		fixture:AddTag("TLS_Light")
 
 		local light = Instance.new("PointLight")
-		light.Color = color
-		light.Range = if emergency then 18 else 26
-		light.Brightness = if emergency then 0.8 else 1.2
+		light.Color = lamp.color
+		light.Range = lamp.range
+		light.Brightness = lamp.brightness
 		-- Shadows from dozens of lights are too expensive for mobile.
 		light.Shadows = false
 		light.Parent = fixture
@@ -161,8 +169,14 @@ local function buildShell(layout: Plan.Layout, shell: Shell.Result, parent: Inst
 	for _, box in shell.rock do
 		newPart(layout, box, ROCK, rock)
 	end
-	local roof = newPart(layout, shell.roof, ROCK, folder)
-	roof:SetAttribute(Builder.OVERHEAD_ATTRIBUTE, true)
+	local caps = newFolder("RockCaps", folder)
+	for _, box in shell.rockCaps do
+		newPart(layout, box, ROCK, caps):AddTag(Builder.OVERHEAD_TAG)
+	end
+	local roof = newFolder("Roof", folder)
+	for _, box in shell.roofSections do
+		newPart(layout, box, ROCK, roof):AddTag(Builder.OVERHEAD_TAG)
+	end
 end
 
 local function buildProp(layout: Plan.Layout, prop: Plan.Prop, parent: Instance)
