@@ -54,6 +54,9 @@ function Theme.screen(name: string, displayOrder: number): ScreenGui
 		DisplayOrder = displayOrder,
 		ResetOnSpawn = false,
 		IgnoreGuiInset = true,
+		-- All text is translated by the game itself (Shared/Localization). Roblox's
+		-- automatic capture and translation would fight it, so it is switched off.
+		AutoLocalize = false,
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 	}, playerGui)
 end

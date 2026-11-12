@@ -6,7 +6,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Logger = require(ReplicatedStorage.Shared.Logger)
-local NetService = require(script.Parent.Parent.Services.NetService)
+local AudioService = require(script.Parent.Parent.Services.AudioService)
 local WorldService = require(script.Parent.Parent.Services.WorldService)
 
 type Entry = {
@@ -65,6 +65,18 @@ function FacilityLights.isCircuitOn(circuit: string): boolean
 	return circuitOff[circuit] ~= true
 end
 
+-- True when at least one lamp in the room is on a live circuit (a flicker does not count
+-- as darkness). A room with no lamps at all is dark.
+function FacilityLights.isRoomLit(room: string): boolean
+	ensure()
+	for _, entry in entries do
+		if entry.room == room and FacilityLights.isCircuitOn(entry.circuit) then
+			return true
+		end
+	end
+	return false
+end
+
 function FacilityLights.setCircuit(circuit: string, on: boolean)
 	ensure()
 	circuitOff[circuit] = not on
@@ -92,7 +104,7 @@ local function flicker(matches: (entry: Entry) -> boolean, seconds: number)
 	if #group == 0 then
 		return
 	end
-	NetService.fireAll("Sound", "LightFlicker", origin)
+	AudioService.play("LightFlicker", origin)
 
 	task.spawn(function()
 		local elapsed, step, lit = 0, 1, false
