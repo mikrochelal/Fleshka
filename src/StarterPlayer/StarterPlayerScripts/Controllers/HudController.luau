@@ -182,16 +182,17 @@ local function build()
 	}, root)
 	Theme.autoScale(objective)
 	Theme.padding(objective, 14, 10)
-	Theme.make("Frame", {
-		Name = "AccentBar",
-		Position = UDim2.fromOffset(-14, -10),
-		Size = UDim2.new(0, 2, 1, 20),
-		BackgroundColor3 = Theme.Color.Accent,
-		BorderSizePixel = 0,
-	}, objective)
 	Theme.make("UIListLayout", {
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		Padding = UDim.new(0, 6),
+	}, objective)
+	-- A short accent dash; fixed size, so it takes part in the list without affecting it.
+	Theme.make("Frame", {
+		Name = "Accent",
+		Size = UDim2.fromOffset(28, 2),
+		BackgroundColor3 = Theme.Color.Accent,
+		BorderSizePixel = 0,
+		LayoutOrder = -1,
 	}, objective)
 	Theme.make("TextLabel", {
 		Size = UDim2.new(1, 0, 0, 12),
@@ -255,6 +256,11 @@ function HudController.Start(_self: any)
 	for _, attribute in ATTRIBUTE do
 		player:GetAttributeChangedSignal(attribute):Connect(renderBars)
 	end
+	-- The server forgets the sprint request when the character respawns; refresh the
+	-- touch button after InputController has reset its own state.
+	player.CharacterAdded:Connect(function()
+		task.defer(renderBars)
+	end)
 	renderObjectives()
 	renderBars()
 end

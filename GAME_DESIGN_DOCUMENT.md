@@ -175,15 +175,39 @@ black → short surface cinematic (a second signal answering) → credits → re
 
 ```text
 ReplicatedStorage
-  Shared/    Loader, Logger, GameState, Net (remote definitions), types, utilities
-  Config/    GameConfig + one config module per system
+  Shared/    Loader, Logger, Signal, RateLimiter, GameState (phases + attribute names),
+             Net (every remote)
+  Config/    GameConfig, PlayerConfig, FlashlightConfig, InteractionConfig, ObjectiveConfig,
+             PowerConfig, CopyConfig, AudioConfig, AtmosphereConfig
 ServerScriptService/TheLastSignal
   Bootstrap  (only Script)
-  Services/  SessionService, PlayerService, NetService, PartyService, ObjectiveService…
-  Systems/   Interaction, Stamina, Flashlight, Puzzles/*, CopyAI/*, HorrorEvents/*…
+  Services/  NetService, SessionService, PlayerService, ObjectiveService, WorldService,
+             NoiseService
+  Systems/   SpawnSystem, MovementSystem, FlashlightSystem, InteractionSystem, WorldProps/,
+             FacilityLights, AtmosphereSystem, PowerSystem, DocumentSystem, RadioSystem,
+             HorrorDirector, CopyAI/, SliceDirector, OverheadGuard, DebugInteractables
+  Data/      Documents, Transmissions, PropList (server-only content)
 StarterPlayerScripts/TheLastSignal
   ClientBootstrap (only LocalScript)
-  Controllers/  UI screens, HUD, input, camera, audio, effects
+  Controllers/  SessionController, InputController, HudController, MessageController,
+                DocumentController, EffectsController, AudioController
+  UI/           Theme
+```
+
+How the pieces talk to each other:
+
+```text
+client input ──SprintIntent / FlashlightToggle──▶ NetService ─▶ Movement / Flashlight
+ProximityPrompt ──────────────────────────────▶ InteractionSystem ─▶ handler by Kind
+                                                  (Document, BreakerPanel, MainLever, Radio,
+                                                   Battery, CommConsole, ElevatorPanel)
+PowerSystem.restored ─▶ RadioSystem (wakes) ─▶ RadioSystem.finished ─▶ HorrorDirector
+        │                                                                    │
+        └────────────▶ SliceDirector.reach(...) ─▶ ObjectiveService ◀────────┘
+noise (sprint, puzzle, console) ─▶ NoiseService ─▶ CopyAI
+server ──attributes──▶ clients: phase, objective index, power (ReplicatedStorage);
+                                stamina, battery, flashlight, dread (Player)
+server ──events──▶ clients: Notify, Subtitle, ShowDocument, Effect, Sound (presentation)
 ```
 
 - **Lifecycle:** bootstraps call `Loader.loadFolder`; modules expose `Init` then `Start`.
@@ -231,7 +255,57 @@ The diagram and the full folder structure are in `docs/MAP_GENERATOR.md`.
 | C. Laboratory    | Airlock, MainLab, SignalChamber, Archive, Observation, ColdStorage |
 | D. Comm Center   | OperatorOffice, Antechamber, CommCenter, ServerRoom, RadioMast |
 
-## 12. Assets
+## 12. Playable slice (version 0.3.0)
+
+What is actually built, as opposed to the full design above.
+
+**Flow (5–10 minutes):** elevator → lobby → find the memo in the Security Booth → engage
+three breakers in the memo's order and throw the lever in the Power Room → the radio in
+the Monitor Room starts receiving → listen to the transmission → a silhouette at the end
+of the main corridor → communication center console recalls the elevator → return to the
+elevator while THE COPY may now give chase → ending line and completion card.
+
+| Objective | Completed when |
+| --------- | -------------- |
+| Investigate the elevator and enter STATION-09 | A player leaves the elevator room |
+| Find the emergency power controls | A player reaches the Power Room or operates a breaker |
+| Restore the facility power | The power puzzle is solved |
+| Investigate the anomalous radio transmission | The transmission has played to the end |
+| Reach the communication center | A player uses the central computer |
+| Find a way to escape | A player uses the recalled elevator |
+
+Milestones are remembered even if they happen early or out of order, and objectives catch
+up in sequence, so splitting up in co-op cannot block the mission.
+
+**Power Restoration as built:** one breaker panel in each of the Security Booth, Power Room
+and Maintenance. The order is shuffled by the server every session and appears only in the
+memo's text. Engaging a breaker lights it amber and shows its position; opening one also
+drops the ones after it. The lever refuses to move until all are engaged; a wrong order
+trips everything, flickers the lit circuits and is loud enough to draw THE COPY. Success
+turns on lighting circuits B, C and D, turns off the emergency lamps and wakes the radio.
+
+**Player values:** walk 12, sprint 20 studs/s; stamina lasts about 7 s, returns after
+1.2 s, and locks at zero until 25%. Flashlight battery lasts about 5 minutes, flickers
+under 15%, recovers slowly to 25% while off; battery packs refill it.
+
+**THE COPY as built** (`Config/CopyConfig`): walks at 9, pursues at 15 (between the
+player's walk and sprint). Sees 38 studs in the dark, 60 when the player's flashlight is
+on. Needs 1 s of continuous sight before reacting. Before the console is used it never
+chases: it stops, stares, and vanishes when approached or after 9 s. After the console it
+may pursue: a warning ("IT HAS SEEN YOU.", interference, flicker) and a 2 s pause first,
+then a chase that ends after 5 s without sight or 25 s in total. A catch needs 0.8 s
+within 4.5 studs and returns the player to the communication center. It appears only at
+map observation points at least 40 studs from every player and out of everyone's sight;
+35 s of quiet follow every encounter (60 s after a catch). While dormant only loud noises
+(a failed start-up, the elevator recall) bring it; once out, it hears sprinting too. After
+the first scripted sighting it also comes to watch about once a minute.
+
+**Scripted event built (1 of 7):** the corridor silhouette, event 1 in section 8.
+
+**Not in the slice:** menu, lobby, parties, settings, the other two puzzles, working doors,
+the journal, voice imitation, audio assets, the intro cinematic and credits.
+
+## 13. Assets
 
 No asset IDs are invented. Until permitted assets are chosen, sounds and models are
 placeholders listed in `ASSET_MANIFEST.md`.

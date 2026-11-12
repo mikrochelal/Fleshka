@@ -6,6 +6,7 @@
 --   Gamepad:  hold L3 to sprint, Y to switch the flashlight.
 --   Touch:    on-screen buttons (created by HudController) call the functions below.
 
+local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
@@ -61,6 +62,10 @@ function InputController.Start(_self: any)
 		if table.find(SPRINT_KEYS, input.KeyCode) then
 			InputController.setSprint(false)
 		end
+	end)
+	-- A new character starts walking on the server, so the local state must match.
+	Players.LocalPlayer.CharacterAdded:Connect(function()
+		InputController.setSprint(false)
 	end)
 	-- Losing focus swallows the key release, so stop sprinting explicitly.
 	UserInputService.WindowFocusReleased:Connect(function()

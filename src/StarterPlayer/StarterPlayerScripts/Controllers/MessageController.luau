@@ -108,7 +108,8 @@ local function showSubtitle(speaker: string, text: string, seconds: number)
 end
 
 local function build()
-	local screen = Theme.screen("TLS_Messages", 20)
+	-- Above TLS_Effects (40): text stays readable over the blackout and the ending.
+	local screen = Theme.screen("TLS_Messages", 50)
 	local root = Theme.make("Frame", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundTransparency = 1,

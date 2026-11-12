@@ -3,7 +3,7 @@
 -- happens in the world into objective progress, and owns the two objects that belong to
 -- the mission itself (the communication console and the elevator panel).
 --
---   EnterStation       a player walks from the elevator into the lobby
+--   EnterStation       a player leaves the elevator room
 --   FindPowerControls  a player reaches the power room or operates a breaker
 --   RestorePower       the power puzzle is solved
 --   InvestigateRadio   the radio transmission has been heard to the end
@@ -14,6 +14,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local GameConfig = require(ReplicatedStorage.Config.GameConfig)
+local ObjectiveConfig = require(ReplicatedStorage.Config.ObjectiveConfig)
 local GameState = require(ReplicatedStorage.Shared.GameState)
 local Logger = require(ReplicatedStorage.Shared.Logger)
 local Transmissions = require(script.Parent.Parent.Data.Transmissions)
@@ -30,9 +31,9 @@ local PowerSystem = require(script.Parent.PowerSystem)
 local RadioSystem = require(script.Parent.RadioSystem)
 local WorldProps = require(script.Parent.WorldProps)
 
--- Rooms whose entry counts for an objective.
-local ENTRY_ROOM = "A_Lobby"
+-- Reaching this room counts as finding the power controls.
 local POWER_ROOM = "B_PowerRoom"
+local SPAWN_TAG = "TLS_Spawn"
 local RECALL_NOISE_RADIUS = 400
 
 local log = Logger.new("Slice")
@@ -41,22 +42,63 @@ local SliceDirector = {}
 
 local startedAt = 0
 local finishing = false
+-- Milestones that have happened, by objective id. They are remembered even when they
+-- happen early or out of order (players split up, or move during the intro), and turned
+-- into objective progress by reconcile().
+local reached: { [string]: boolean } = {}
 
 local function notify(player: Player, text: string, kind: string)
 	NetService.fire("Notify", player, text, kind)
 end
 
--- Checks the objectives that depend on where players are.
+-- Completes the current objective for as long as its milestone has been reached.
+local function reconcile()
+	if not SessionService.isPlaying() then
+		return
+	end
+	local current = ObjectiveService.currentId()
+	while current and reached[current] do
+		ObjectiveService.complete(current)
+		current = ObjectiveService.currentId()
+	end
+end
+
+-- Records a milestone. Each one physically requires the ones before it (no power without
+-- entering the station, no transmission without power), so they count as reached too.
+local function reach(id: string)
+	for _, objective in ObjectiveConfig.List do
+		reached[objective.id] = true
+		if objective.id == id then
+			break
+		end
+	end
+	reconcile()
+end
+
+-- The rooms players start in; standing in any other room means they have entered.
+local function startRooms(): { [string]: boolean }
+	local rooms: { [string]: boolean } = {}
+	for _, marker in WorldService.getTagged(SPAWN_TAG) do
+		local room = WorldService.zoneAt(marker.Position)
+		if room then
+			rooms[room] = true
+		end
+	end
+	return rooms
+end
+
+-- Checks the milestones that depend on where players are.
 local function evaluateZones()
 	if not SessionService.isPlaying() then
 		return
 	end
+	local start = startRooms()
 	for _, player in Players:GetPlayers() do
 		local room = WorldService.getPlayerZone(player)
-		if room == ENTRY_ROOM then
-			ObjectiveService.complete("EnterStation")
-		elseif room == POWER_ROOM then
-			ObjectiveService.complete("FindPowerControls")
+		if room == POWER_ROOM then
+			reach("FindPowerControls")
+		elseif room and not start[room] then
+			reach("EnterStation")
 		end
 	end
 end
@@ -68,7 +110,7 @@ local function onConsole(player: Player, target: Instance, _id: string)
 	if not PowerSystem.isOn() then
 		notify(player, "The console is dead. The station has no power.", "info")
 	elseif ObjectiveService.isActive("ReachCommCenter") then
-		ObjectiveService.complete("ReachCommCenter")
+		reach("ReachCommCenter")
 		NetService.fireAll(
 			"Notify",
 			"Recall signal sent. The freight elevator is on its way down.",
@@ -93,7 +135,7 @@ end
 
 local function finish()
 	finishing = true
-	ObjectiveService.complete("Escape")
+	reach("Escape")
 	ReplicatedStorage:SetAttribute(GameState.DURATION_ATTRIBUTE, math.floor(os.clock() - startedAt))
 	CopyAI.shutdown()
 	SessionService.setPhase(GameState.Phase.Finale)
@@ -147,24 +189,22 @@ function SliceDirector.Start(_self: any)
 	InteractionSystem.registerKind("ElevatorPanel", onElevator)
 
 	WorldService.zoneEntered:Connect(evaluateZones)
-	ObjectiveService.completed:Connect(evaluateZones)
 	SessionService.phaseChanged:Connect(function(phase: GameState.Phase)
 		if phase == GameState.Phase.Playing then
 			startedAt = os.clock()
 			evaluateZones()
+			reconcile()
 		end
 	end)
 
 	PowerSystem.controlsUsed:Connect(function()
-		ObjectiveService.complete("FindPowerControls")
+		reach("FindPowerControls")
 	end)
 	PowerSystem.restored:Connect(function()
-		-- Whoever solved it has necessarily found the controls.
-		ObjectiveService.complete("FindPowerControls")
-		ObjectiveService.complete("RestorePower")
+		reach("RestorePower")
 	end)
 	RadioSystem.finished:Connect(function()
-		ObjectiveService.complete("InvestigateRadio")
+		reach("InvestigateRadio")
 		HorrorDirector.armCorridorSighting()
 	end)
 
